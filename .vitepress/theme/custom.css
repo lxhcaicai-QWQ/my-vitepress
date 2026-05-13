@@ -1,0 +1,9 @@
+/* 扩大整体布局宽度 */
+:root {
+  --vp-layout-max-width: 1800px;
+}
+
+/* 扩大文档内容区域宽度 */
+.VPDoc.has-aside .content-container {
+  max-width: 1200px !important;
+}
