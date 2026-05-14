@@ -19,11 +19,17 @@ export default defineConfig({
           { text: 'Markdown Examples', link: '/markdown-examples' },
           { text: 'Runtime API Examples', link: '/api-examples' }
         ]
+      },
+      {
+        text: 'algorithm',
+        items: [
+          { text: 'ACM输入输出模板', link: '/algorithm/acm-python-io.md' }
+        ]
       }
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/lxhcaicai-QWQ/my-vitepress.git' }
     ]
   }
 })
