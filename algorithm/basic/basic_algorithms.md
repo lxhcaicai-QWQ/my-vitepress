@@ -436,3 +436,140 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 前缀和与差分
+
+### 前缀和
+给定一个长度为n的整数序列a，之后进行m次询问。
+每次询问给定两个整数l和r，请求出序列a中第l个数到第r个数的和。
+
+**预处理**：用 O(n) 的时间创建一个新的数组S，称为**前缀和数组**。
+- **定义**：S[i]存储原数组a中前i个元素的和，即S[i] = a[1] + a[2] + ... + a[i]。
+- **查询**：利用前缀和数组，可以在 O(1) 的时间内计算出任意区间[l, r]的和。
+
+```python
+
+def main():
+    n, m = map(int, input().split())
+
+    arr = list(map(int, input().split()))
+    n = len(arr)
+    sums = [0] * (n + 1)
+    for i in range(n):
+        sums[i + 1] = sums[i] + arr[i]
+
+    def _query(l, r: int):
+        return sums[r] - sums[l-1]
+
+    for _ in range(m):
+        l, r = map(int, input().split())
+        print(_query(l, r))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 子矩阵的和
+输入一个n x m的整数矩阵和q个询问。
+每个询问给出子矩阵的左上角坐标(x1, y1)和右下角坐标(x2, y2)。
+对于每个询问，求出该子矩阵中所有元素的和。
+
+```python
+def main():
+    n,m,q = map(int, input().split())
+    martix = []
+    for _ in range(n):
+        row = list(map(int, input().split()))
+        martix.append(row)
+
+    prefix = [[0] * (m + 1) for _ in range(n + 1)]
+
+    for i in range(n):
+        for j in range(m):
+            prefix[i + 1][j + 1] = prefix[i + 1][j] + prefix[i][j+1] - prefix[i][j] + martix[i][j]
+
+    def _query(x1,y1,x2,y2: int) -> int:
+        return prefix[x2][y2] - prefix[x2][y1-1] - prefix[x1-1][y2] + prefix[x1-1][y1-1]
+
+    for _ in range(q):
+        x1,y1,x2,y2 = map(int, input().split())
+        print(_query(x1,y1,x2,y2))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 差分
+给定一个初始数组a和m次操作。
+每次操作的形式为(l, r, c)，要求将数组a在区间[l, r]内的所有元素都加上c。
+求执行完所有m次操作后，最终的数组是什么。
+
+正确思路是使用**差分数组**。定义一个差分数组b，使得原数组a是b的前缀和。
+- **定义**:b[i] = a[i] - a[i-1](规定a[0] = 0)
+- **性质**:a[i] = b[1] + b[2] + ... + b[i]
+
+```python
+def main():
+    n, m = map(int, input().split())
+    nums = list(map(int, input().split()))
+
+    subs =[0] * (n + 2)
+    for i in range(n):
+        if i == 0:
+            subs[i + 1] = nums[i]
+        else:
+            subs[i + 1] = nums[i] - nums[i - 1]
+
+    for _ in range(m):
+        l, r, c = map(int, input().split())
+        subs[l] += c
+        subs[r + 1] -= c
+
+    for i in range(n):
+        subs[i + 1] += subs[i]
+        print(subs[i + 1],end=" ")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 差分矩阵
+给定一个n x m的初始矩阵。接下来有q次操作，每次操作对一个子矩阵(x1, y1)到(x2, y2)内的所有元素都加上一个值c。
+
+二维差分是解决此类问题的关键。其思想是构造一个**差分矩阵b**，使得原矩阵a是差分矩阵b的**二维前缀和**。这样，对原矩阵a的一个子矩阵区域进行修改，就等价于对差分矩阵b的**四个角**进行修改。二维差分是解决此类问题的关键。其思想是构造一个**差分矩阵b**，使得原矩阵a是差分矩阵b的**二维前缀和**。这样，对原矩阵a的一个子矩阵区域进行修改，就等价于对差分矩阵b的**四个角**进行修改。
+
+```python
+def main():
+    n,m,q = map(int,input().split())
+
+    matrix = []
+    for _ in range(n):
+        row = list(map(int, input().split()))
+        matrix.append(row)
+
+    subs =[[0] * (m + 2) for _ in range(n + 2)]
+
+    def _insert(x1,y1,x2,y2,c: int):
+        subs[x1][y1] += c
+        subs[x1][y2 + 1] -=c
+        subs[x2 + 1][y1] -=c
+        subs[x2 + 1][y2 + 1] += c
+
+    for i in range(1,n + 1):
+        for j in range(1,m + 1):
+            _insert(i,j,i,j,matrix[i-1][j-1])
+
+    for _ in range(q):
+        x1, y1, x2, y2, c = map(int, input().split())
+        _insert(x1,y1,x2,y2,c)
+
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            subs[i][j] += subs[i-1][j] + subs[i][j-1] - subs[i-1][j-1]
+
+    for i in range(1, n + 1):
+        print(*subs[i][1:m+1])
+
+if __name__ == "__main__":
+    main()
+```
