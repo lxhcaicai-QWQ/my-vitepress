@@ -661,3 +661,30 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 位运算
+
+### 二进制中1的个数二进制中1的个数
+- **问题:** 给定一个正整数x，如何快速计算出它在二进制表示中1的个数？
+- **输入示例:** x = 10
+- **对应输出:** 2(因为10的二进制是1010，含有两个1)
+
+
+利用 x &= x - 1（或 x & -x）等位运算不断消除二进制数最低位的1，直到数字变为0，统计消除的次数即为1的个数。
+```python
+def main():
+    n = int(input())
+
+    def _calculate(num: int) -> int:
+        count = 0
+        while num > 0:
+            num -= num&-num
+            count += 1
+        return count
+
+    for x in list(map(int, input().split())):
+        print(_calculate(x), end=" ")
+
+if __name__ == "__main__":
+    main()
+```
