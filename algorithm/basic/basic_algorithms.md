@@ -184,3 +184,77 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+## 二分
+
+### 数的范围
+给定一个按**升序**排列的整数数组q和若干个查询x。
+对于每个查询x，要求输出它在数组中**首次出现**和**最后一次出现**的位置（下标从0开始）。
+如果数组中不存在该数，则输出-1 -1。
+
+此题是**二分查找**的经典应用。因为需要寻找区间的左右两个端点，所以需要执行两次二分查找，分别用于寻找左边界和右边界。
+
+```python
+
+def main():
+    n, q = map(int, input().split())
+    nums = list(map(int, input().split()))
+
+
+    def _query(item: int) -> tuple[int, int]:
+        l, r = 0, len(nums) - 1
+        lpos = -1
+        while l<=r:
+            mid = (l + r) // 2
+            if nums[mid] >= k:
+                r = mid - 1
+                lpos = mid
+            else:
+                l = mid + 1
+
+        if lpos == -1 or nums[lpos] != item:
+            return -1, -1
+
+        l, r = 0, len(nums) - 1
+        rpos = -1
+        while l<=r:
+            mid = (l + r) // 2
+            if nums[mid] <= k:
+                l = mid + 1
+                rpos = mid
+            else:
+                r = mid - 1
+
+        if rpos == -1 or nums[rpos] != item:
+            return -1, -1
+        return lpos, rpos
+
+    for _ in range(q):
+        k = int(input())
+        print(*_query(k))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 数的三次方根
+给定一个浮点数n，求它的三次方根。
+
+这个问题的本质是在一个单调递增的函数f(y) = y³上，寻找一个y使得f(y) = n。由于函数f(y)在整个实数域上都是单调的，所以非常适合使用二分查找算法。
+```python
+def main() -> None:
+    n = float(input())
+    l, r = -50.0, 50.0
+    while abs(r - l) > 1e-8:
+        mid = (l + r) / 2
+        if mid ** 3 >= n:
+            r = mid
+        else:
+            l = mid
+    print(f"{r:.6f}")
+
+if __name__ == "__main__":
+    main()
+```
