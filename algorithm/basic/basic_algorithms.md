@@ -258,3 +258,181 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 ```
+
+## 高精度
+
+### 高精度加法
+
+给定两个长度可能非常长（最高可达 10^6 位）的非负整数 A 和 B，它们以字符串形式输入。请计算并输出它们的和。
+
+
+模拟人类进行“竖式加法”的计算过程。从个位开始，逐位对齐相加，并处理好每一位的进位。
+
+- python原生解法
+```python
+import sys
+
+# 【关键解封操作】将字符串转整数的最大位数限制设置为 0 (即无限制)
+sys.set_int_max_str_digits(0)
+
+def main() -> None:
+    a = int(input())
+    b = int(input())
+    result = a + b
+    print(result)
+
+if __name__ == "__main__":
+    main()
+```
+- 高精度模拟加法
+```python
+
+def _sub(a, b: str) -> str:
+    if len(a) < len(b):
+        return _sub(b,a)
+
+    # 反转字符串
+    a = a[::-1]
+    b = b[::-1]
+
+    alen = len(a)
+    blen = len(b)
+
+    t: int = 0
+    result = []
+    for i in range(alen):
+        t += int(a[i])
+        if i < blen:
+            t += int(b[i])
+
+        result.append(t % 10)
+        t //= 10
+
+    while t!=0:
+        result.append(t % 10)
+        t //= 10
+
+    return ''.join(map(str,result[::-1]))
+
+def main() -> None:
+    a = str(input())
+    b = str(input())
+
+    print(_sub(a,b))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 高精度减法
+给定两个非常大的正整数 A 和 B（以字符串形式表示），计算 A - B 的值。
+
+```python
+
+def compare(a, b:str) -> bool:
+    if len(a) != len(b):
+        return len(a) > len(b)
+
+    for i in range(len(a)):
+        if a[i] != b[i]:
+            return a[i] > b[i]
+    return True
+
+def sub(a,b:str) -> str:
+    a = a[::-1]
+    b = b[::-1]
+    alen = len(a)
+    blen = len(b)
+
+    result = []
+    t = 0
+    for i in range(alen):
+        t = int(a[i]) - t
+        if i < blen:
+            t -= int(b[i])
+        result.append((t + 10) % 10)
+        if t < 0:
+            t = 1
+        else:
+            t = 0
+    while len(result) > 1 and result[-1] == 0:
+        result.pop()
+    return ''.join(map(str, result[::-1]))
+
+def main() -> None:
+    a = str(input())
+    b = str(input())
+    if compare(a,b):
+        print(sub(a,b))
+    else:
+        print(f"-{sub(b,a)}")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 高精度乘法
+给定一个长度最高可达100000位的非负大整数A(以字符串形式给出) 和一个普通的非负整数b(0 ≤ b ≤ 10000)，计算并输出它们的乘积。
+
+模拟小学竖式乘法。将大整数A的每一位从低到高（个位、十位...）依次乘以b，并处理好每一步的**进位**。
+
+```python
+def mul(a: str, b: int) -> str:
+    a = a[::-1]
+    alen = len(a)
+
+    t = 0
+    result = []
+    for i in range(alen):
+        t += int(a[i]) * b
+        result.append(t%10)
+        t //= 10
+
+    while t != 0:
+        result.append(t%10)
+        t //= 10
+    
+    # 避免乘0的情况
+    while len(result) > 1 and result[-1] == 0:
+        result.pop()
+
+    return ''.join(map(str, result[::-1]))
+
+def main():
+    a = str(input())
+    num = int(input())
+    print(mul(a, num))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 高精度除法
+实现一个高精度整数 A (以字符串表示) 除以一个低精度整数 b 的运算。
+
+算法的核心是模拟手动做长除法的过程，从被除数的最高位开始，逐位向低位计算。过程中，将上一位的余数乘以10，再加上当前位的数字，作为新的被除数，然后进行除法运算。
+
+```python
+def div(a: str, num: int) -> tuple[str, int]:
+    t = 0
+    result = []
+    for i in range(len(a)):
+        t = t * 10 + int(a[i])
+        result.append(t // num)
+        t %= num
+
+    result = result[::-1]
+    while len(result) > 1 and result[-1] == 0:
+        result.pop()
+    return ''.join(map(str, result[::-1])), t
+
+def main():
+    a = str(input())
+    num = int(input())
+    result, remainer = div(a, num)
+    print(result)
+    print(remainer)
+
+if __name__ == "__main__":
+    main()
+```
