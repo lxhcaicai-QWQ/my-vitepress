@@ -573,3 +573,91 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+## 双指针算法
+
+### 最长连续不重复子序列
+给定一个整数数组，找出并返回其中最长的、**连续**的、**不含重复元素**的子序列的长度。
+**示例**
+- **输入:** [1, 2, 2, 3, 5]
+- **输出:** 3
+- **解释:** 最长连续不重复子序列是[2, 3, 5]，长度为 3。
+
+在窗口内出现重复元素时向右移动以缩小窗口。始终保持窗口内没有重复元素，并在此过程中记录窗口的最大长度。
+```python
+from collections import deque
+
+def main():
+    n = int(input())
+
+    ans = 1
+    keyset = set()
+    que = deque()
+    for x in list(map(int, input().split())):
+        while x in keyset:
+            item = que.popleft()
+            keyset.remove(item)
+
+        que.append(x)
+        keyset.add(x)
+        ans = max(ans, len(que))
+
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+### 数组元素的目标和
+- **输入**
+    - 两个**升序**整数数组A和B。
+    - 一个目标值x。
+- **目标**
+    - 在A和B中各找一个数，使得它们的和恰好等于x。
+    - 输出这两个数在各自数组中的下标i和j
+
+利用数组的**单调性**（已排序）。一个指针i指向数组A的开头，另一个指针j指向数组B的结尾，两个指针相向移动，不断缩小搜索范围。
+```python
+def main():
+    n,m,x = map(int, input().split())
+    a = list(map(int, input().split()))
+    b = list(map(int, input().split()))
+
+    i, j = 0, len(b) - 1
+    while i < len(a):
+        while j >=0 and a[i] + b[j] > x:
+            j -=1
+        if j >= 0 and a[i] + b[j] == x:
+            print(i, j)
+        i += 1
+
+if __name__ == "__main__":
+    main()
+```
+
+### 判断子序列
+给定两个长度分别为n和m的整数序列a和b，判断序列a是否是序列b的子序列。
+**子序列定义**从原序列中删除若干个元素（也可以不删），剩余元素保持原有相对顺序组成的新序列。
+
+采用双指针法分别遍历两个字符串，按顺序在主串中匹配子串的字符，若子串指针能顺利走到末尾则判定为子序列。
+
+(注：核心思路即为贪心匹配，只要遇到相同的字符就同步移动指针，否则只移动主串指针。)
+```python
+def main():
+    n,m = map(int, input().split())
+    a = list(map(int, input().split()))
+    b = list(map(int, input().split()))
+
+    i = 0
+    for x in b:
+        if a[i] == x:
+            i += 1
+        if i == n:
+            break
+
+    print("Yes" if i == n else "No")
+
+if __name__ == "__main__":
+    main()
+```
