@@ -166,6 +166,60 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+## Trie
+
+### Trie字符串统计
+维护一个字符串集合，支持两种操作：
+1. I s：插入一个字符串s。
+2. Q s：查询字符串s出现了多少次。
+
+**数据结构**：使用**Trie树**。树的每条边代表一个字符，从根到一个节点的路径构成一个字符串前缀。
+插入：顺着字符往下走，没节点就新建，走到字符串末尾时计数 +1。
+查询：顺着字符往下找，中途找不到就返 0，顺利走到末尾就返计数值。
+```python
+N = 100005
+tot = 0
+
+def main():
+    n = int(input())
+
+    trie = [[0] * 26]
+    cnt = [0]
+
+    def _insert(ss: str):
+        global tot
+        p = 0
+        for c in ss:
+            ch: int = ord(c) - ord('a')
+            if trie[p][ch] == 0:
+                trie.append([0] * 26)
+                cnt.append(0)
+                tot += 1
+                trie[p][ch] = tot
+            p = trie[p][ch]
+
+        cnt[p] += 1
+
+    def _query(ss: str) -> int:
+        p = 0
+        for c in ss:
+            ch: int = ord(c) - ord('a')
+            p = trie[p][ch]
+            if p == 0:
+                return 0
+        return cnt[p]
+
+    for _ in range(n):
+        command, ss = input().split()
+        if command == "Q":
+            print(_query(ss))
+        elif command == "I":
+            _insert(ss)
+
+if __name__ == "__main__":
+    main()
+```
+
 
 ## 并查集
 
