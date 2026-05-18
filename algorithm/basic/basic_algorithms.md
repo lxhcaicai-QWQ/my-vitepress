@@ -688,3 +688,83 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 离散化
+
+### 区间和
+在一个无限大的数轴上，有n次操作和m次查询。
+1. **单点加法**：x c，表示在数轴上的位置x加上一个整数c。
+2. **区间求和**：l r，表示查询数轴上[l, r]区间内所有数的和。
+
+**核心思想：离散化 (Discretization) + 前缀和 (Prefix Sum)**
+```python
+def main():
+    n,m = map(int, input().split())
+
+    adds = [list(map(int, input().split())) for _ in range(n)]
+    query = [list(map(int, input().split())) for _ in range(m)]
+
+    mergelist = [i[0] for i in adds]
+    mergelist.extend(item for row in query for item in row)
+
+    uniquelist = sorted(list(set(mergelist)))
+
+    def _find(x: int) -> int:
+        pos = -1
+        l, r = 0, len(uniquelist)-1
+        while l <= r:
+            mid = (l + r) // 2
+            if (uniquelist[mid] >= x):
+                r = mid - 1
+                pos = mid
+            else:
+                l = mid + 1
+        # 映射 1 ~ n
+        return pos + 1
+
+    # 前面一位为0
+    sums = [0] * (len(uniquelist) + 1)
+    for (a,b) in adds:
+        x = _find(a)
+        sums[x] += b
+
+    for i in range(1, len(sums)):
+        sums[i] += sums[i-1]
+
+    for (a, b) in query:
+        l = _find(a)
+        r = _find(b)
+        print(sums[r] - sums[l - 1])
+
+if __name__ == "__main__":
+    main()
+```
+
+## 区间合并
+
+### 区间合并
+给定n个区间[li, ri]，要求合并所有有交集的区间。
+一个区间[l, r]和[l', r']有交集，当且仅当l <= r'且l' <= r。
+
+**核心思想**: 将所有区间按左端点排序，然后逐一扫描，将能合并的区间合并成一个大区间。
+```python
+def main():
+    n = int(input())
+    lines =[list(map(int,input().split())) for _ in range(n)]
+    # 对需要降序的列加 - 取反，升序的列保持不变。
+    lines.sort(key = lambda x: (x[0], -x[1]))
+
+    ans = 1  # 只要 n > 0，至少有一个区间
+    now = lines[0][1]  # 初始化为第一个区间的右边界
+    for (l, r) in lines:
+        if l <= now:
+            now = max(r, now)
+        else:
+            ans += 1
+            now = r
+
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
