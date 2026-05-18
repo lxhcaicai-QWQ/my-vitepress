@@ -166,3 +166,101 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 并查集
+
+### 合并集合
+有n个元素，每个元素各自属于一个独立的集合。
+支持m次以下两种操作：
+1. M a b：合并元素a和b所在的两个集合。
+2. Q a b：询问元素a和b是否属于同一个集合。
+
+```python
+def main():
+    n, m = map(int, input().split())
+
+    fa = [i for i in range(n + 1)]
+
+    """
+        def _find(x: int) -> int:
+            if x == fa[x]:
+                return x
+            fa[x] = _find(fa[x])
+            return fa[x]
+    """
+    # （迭代，永不爆栈）
+    def _find(x: int) -> int:
+        root = x
+        while root != fa[root]:
+            root = fa[root]
+        while x != root:
+            nxt = fa[x]
+            fa[x] = root
+            x = nxt
+        return root
+
+    for _ in range(m):
+        command = input().split()
+        a = _find(int(command[1]))
+        b = _find(int(command[2]))
+        if command[0] == 'M':
+            if a == b:
+                continue
+            fa[a] = b
+        elif command[0] == 'Q':
+            print("Yes" if a == b else "No")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 连通块中点的数量
+维护一个数据结构，支持以下三种操作：
+1. C a b：连接点a和点b。
+2. Q1 a b：查询点a和点b是否连通。
+3. Q2 a：查询点a所在连通块中点的数量
+
+使用并查集（Disjoint Set Union）算法，并额外维护每个集合的大小。
+```python
+
+def main():
+    n, m = map(int, input().split())
+
+    fa = [i for i in range(n + 1)]
+    cnt = [1] * (n + 1)
+    cnt[0] = 0
+
+    def _find(x: int) -> int:
+        root = x
+        while root != fa[root]:
+            root = fa[root]
+        while x != root:
+            nxt = fa[x]
+            fa[x] = root
+            x = nxt
+        return root
+
+    def _merge(a, b: int):
+        fa[a] = b
+        cnt[b] += cnt[a]
+
+    for _ in  range(m):
+        command = input().split()
+        if command[0] == 'C':
+            a = _find(int(command[1]))
+            b = _find(int(command[2]))
+            if a != b:
+                _merge(a, b)
+
+        elif command[0] == 'Q1':
+            a = _find(int(command[1]))
+            b = _find(int(command[2]))
+            print("Yes" if a == b else "No")
+
+        elif command[0] == "Q2":
+            a = _find(int(command[1]))
+            print(cnt[a])
+
+if __name__ == "__main__":
+    main()
+```
