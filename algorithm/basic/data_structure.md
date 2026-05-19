@@ -219,7 +219,54 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+### 最大异或对
+给定 N 个非负整数，从这些数中找出两个数，使它们的**异或（XOR）值**最大。
+**输入：** 包含 N 个非负整数的数组。  
+**输出：** 最大的异或值。
 
+**贪心策略** 要使异或和a ^ b最大，需要其二进制表示下的高位（Most Significant Bit）尽可能为 1。
+**Trie 查询：**遍历数组中的每个数x。对于x的每一位（从高到低），在 Trie 中贪心寻找与之**相反**的位。
+```python
+tot = 0
+def main():
+
+    trie = [[0] * 32]
+
+    def _insert(x: int) -> None:
+        global tot
+        p = 0
+        for i in range(31, -1, -1):
+            j = x >> i & 1
+            if trie[p][j] == 0:
+                trie.append([0] * 32)
+                tot += 1
+                trie[p][j] = tot
+            p = trie[p][j]
+
+    def _query(x: int) -> int:
+        res = 0
+        p = 0
+        for i in range(31, -1, -1):
+            j = x >> i & 1
+            if trie[p][j ^ 1] != 0:
+                res |= 1 << i
+                p = trie[p][j ^ 1]
+            else:
+                p = trie[p][j]
+
+        return res
+
+    n = int(input())
+    ans = 0
+    for x in list(map(int, input().split())):
+        _insert(x)
+        ans = max(ans, _query(x))
+
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
 
 ## 并查集
 
@@ -314,6 +361,83 @@ def main():
         elif command[0] == "Q2":
             a = _find(int(command[1]))
             print(cnt[a])
+
+if __name__ == "__main__":
+    main()
+```
+
+## 哈希表
+
+### 模拟散列表
+实现一个支持以下两种操作的数据结构：
+1. I x: 插入一个整数x。
+2. Q x: 查询整数x是否存在。
+
+**核心方法：拉链法 (Separate Chaining)**
+1. **哈希函数 (Hash Function):**
+    - 将大范围的数x映射到较小的数组下标k。
+    - 公式:k = (x % N + N) % N
+```python
+N = 10 ** 5 + 1
+INF = 10**10
+def main():
+
+    hsh = [INF] * N
+    def _find(x: int) -> int:
+        t = (x + N) % N
+        while hsh[t] != INF and hsh[t] != x:
+            t += 1
+            if t == N:
+                t = 0
+        return t
+
+    n = int(input())
+    for _ in range(n):
+        command = input().split()
+        if command[0] == "I":
+            x = int(command[1])
+            hsh[_find(x)] = x
+        elif command[0] == "Q":
+            x = int(command[1])
+            print("No" if hsh[_find(x)] == INF else "Yes")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 字符串哈希
+给定一个字符串S和多次询问。每次询问给出两个区间[l1, r1]和[l2, r2]，要求快速判断这两个区间对应的子字符串是否完全相同。
+
+将任意子字符串映射为一个唯一的整数（哈希值），通过比较哈希值来判断子字符串是否相等。这是一种以极高概率保证正确性的随机化算法。
+**步骤 (Steps)**
+1. **预处理 (Preprocessing) - O(N)**
+    - **定义进制:** 将字符串看作一个P进制数（P通常取质数 131 或 13331）。
+    - **计算前缀哈希:** 计算字符串所有前缀S[1..i]的哈希值h[i]。
+    - **计算P的幂:** 预处理P的各次幂p[i] = P^i。
+2. **查询 (Query) - O(1)**
+    - 利用前缀哈希和P的幂，可以计算出任意子串S[l..r]的哈希值。
+    - **核心公式:** hash(l, r) = h[r] - h[l-1] * p[r-l+1]
+    - **判断:** 比较hash(l1, r1)和hash(l2, r2)是否相等即可。
+```python
+def main():
+    n, m = map(int, input().split())
+    ss = input()
+
+    MOD = 2 ** 64
+    p = [1] * (n + 1)
+    f = [0] * (n + 1)
+    for i in range(1, n + 1):
+        f[i] = (f[i - 1] * 131 + ord(ss[i - 1])) % MOD
+        p[i] = p[i - 1] * 131 % MOD
+
+    def _get(l, r: int) -> int:
+        return (f[r] - f[l -1] * p[r - l + 1]) % MOD
+
+    for _ in range(m):
+        l1,r1,l2,r2 = map(int, input().split())
+        print(
+            "Yes" if _get(l1,r1) == _get(l2,r2) else "No"
+        )
 
 if __name__ == "__main__":
     main()
