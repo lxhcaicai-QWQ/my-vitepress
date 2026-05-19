@@ -365,3 +365,80 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 哈希表
+
+### 模拟散列表
+实现一个支持以下两种操作的数据结构：
+1. I x: 插入一个整数x。
+2. Q x: 查询整数x是否存在。
+
+**核心方法：拉链法 (Separate Chaining)**
+1. **哈希函数 (Hash Function):**
+    - 将大范围的数x映射到较小的数组下标k。
+    - 公式:k = (x % N + N) % N
+```python
+N = 10 ** 5 + 1
+INF = 10**10
+def main():
+
+    hsh = [INF] * N
+    def _find(x: int) -> int:
+        t = (x + N) % N
+        while hsh[t] != INF and hsh[t] != x:
+            t += 1
+            if t == N:
+                t = 0
+        return t
+
+    n = int(input())
+    for _ in range(n):
+        command = input().split()
+        if command[0] == "I":
+            x = int(command[1])
+            hsh[_find(x)] = x
+        elif command[0] == "Q":
+            x = int(command[1])
+            print("No" if hsh[_find(x)] == INF else "Yes")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 字符串哈希
+给定一个字符串S和多次询问。每次询问给出两个区间[l1, r1]和[l2, r2]，要求快速判断这两个区间对应的子字符串是否完全相同。
+
+将任意子字符串映射为一个唯一的整数（哈希值），通过比较哈希值来判断子字符串是否相等。这是一种以极高概率保证正确性的随机化算法。
+**步骤 (Steps)**
+1. **预处理 (Preprocessing) - O(N)**
+    - **定义进制:** 将字符串看作一个P进制数（P通常取质数 131 或 13331）。
+    - **计算前缀哈希:** 计算字符串所有前缀S[1..i]的哈希值h[i]。
+    - **计算P的幂:** 预处理P的各次幂p[i] = P^i。
+2. **查询 (Query) - O(1)**
+    - 利用前缀哈希和P的幂，可以计算出任意子串S[l..r]的哈希值。
+    - **核心公式:** hash(l, r) = h[r] - h[l-1] * p[r-l+1]
+    - **判断:** 比较hash(l1, r1)和hash(l2, r2)是否相等即可。
+```python
+def main():
+    n, m = map(int, input().split())
+    ss = input()
+
+    MOD = 2 ** 64
+    p = [1] * (n + 1)
+    f = [0] * (n + 1)
+    for i in range(1, n + 1):
+        f[i] = (f[i - 1] * 131 + ord(ss[i - 1])) % MOD
+        p[i] = p[i - 1] * 131 % MOD
+
+    def _get(l, r: int) -> int:
+        return (f[r] - f[l -1] * p[r - l + 1]) % MOD
+
+    for _ in range(m):
+        l1,r1,l2,r2 = map(int, input().split())
+        print(
+            "Yes" if _get(l1,r1) == _get(l2,r2) else "No"
+        )
+
+if __name__ == "__main__":
+    main()
+```
