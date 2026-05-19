@@ -219,7 +219,54 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+### 最大异或对
+给定 N 个非负整数，从这些数中找出两个数，使它们的**异或（XOR）值**最大。
+**输入：** 包含 N 个非负整数的数组。  
+**输出：** 最大的异或值。
 
+**贪心策略** 要使异或和a ^ b最大，需要其二进制表示下的高位（Most Significant Bit）尽可能为 1。
+**Trie 查询：**遍历数组中的每个数x。对于x的每一位（从高到低），在 Trie 中贪心寻找与之**相反**的位。
+```python
+tot = 0
+def main():
+
+    trie = [[0] * 32]
+
+    def _insert(x: int) -> None:
+        global tot
+        p = 0
+        for i in range(31, -1, -1):
+            j = x >> i & 1
+            if trie[p][j] == 0:
+                trie.append([0] * 32)
+                tot += 1
+                trie[p][j] = tot
+            p = trie[p][j]
+
+    def _query(x: int) -> int:
+        res = 0
+        p = 0
+        for i in range(31, -1, -1):
+            j = x >> i & 1
+            if trie[p][j ^ 1] != 0:
+                res |= 1 << i
+                p = trie[p][j ^ 1]
+            else:
+                p = trie[p][j]
+
+        return res
+
+    n = int(input())
+    ans = 0
+    for x in list(map(int, input().split())):
+        _insert(x)
+        ans = max(ans, _query(x))
+
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
 
 ## 并查集
 
