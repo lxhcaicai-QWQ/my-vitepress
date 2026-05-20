@@ -26,7 +26,8 @@ export default defineConfig({
           { text: 'ACM输入输出模板', link: '/algorithm/acm-python-io.md' },
           { text: '基础算法', link: '/algorithm/basic/basic_algorithms.md' },
           { text: '数据结构', link: '/algorithm/basic/data_structure.md' },
-          { text: '贪心', link: '/algorithm/basic/greedy_problem.md' }
+          { text: '贪心', link: '/algorithm/basic/greedy_problem.md' },
+          { text: '动态规划', link: '/algorithm/basic/dynamic_programming.md' }
         ]
       }
     ],
