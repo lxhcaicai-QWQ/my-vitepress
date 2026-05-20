@@ -134,3 +134,111 @@ if __name__ == "__main__":
     main()
 
 ```
+
+## Huffman树
+
+### 合并果子
+有 n 堆果子，每次只能合并两堆。合并的代价是这两堆果子的数量之和。
+求将所有果子合并成一堆所需的**最小总代价**。
+
+**核心思想：** **贪心算法**(此为经典的 **哈夫曼树** 模型)
+```python
+import heapq
+
+def main():
+    n = int(input())
+    pq = list(map(int, input().split()))
+
+    # 将普通列表原地转化为最小堆
+    heapq.heapify(pq)
+
+    ans = 0
+    while len(pq) > 1:
+        a = heapq.heappop(pq)
+        b = heapq.heappop(pq)
+        heapq.heappush(pq, a + b)
+        ans += a + b
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 排序不等式
+
+### 排队打水
+有 n 个人排队打水，第 i 个人打水需要的时间为 tᵢ。
+如何安排排队顺序，才能使所有人的**总等待时间**之和最小？
+
+这是一个经典的**贪心**问题。
+**核心思想：让打水时间短的人排在前面。**
+**直观理解：**  
+打水时间短的人排在前面，可以有效减少后面所有人的等待时间，从而使总和最小。
+```python
+def main():
+    n = int(input())
+    a = list(map(int, input().split()))
+    a.sort()
+
+    ans = 0
+    cur = 1
+    for x in a:
+        ans += (n - cur) * x
+        cur += 1
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 绝对值不等式
+
+### 货仓选址货仓选址
+在一条数轴上有 N 个商店，其坐标分别为x₁, x₂, ..., xₙ。
+现要在这条数轴上建立一个货仓，问货仓应建在**何处**，才能使所有商店到货仓的**距离之和最小**？
+
+**核心思想：中位数定理 (Median Theorem)**
+当货仓的位置p选在所有商店坐标x的**中位数**上时，距离之和最小。
+- **奇数个点：** 中位数是唯一的（排序后最中间的那个数）。
+- **偶数个点：** 中位数是排序后中间两个数之间的任意一点（包括端点），选择其中任意一个作为货仓位置，最终的最小距离和都一样。
+```python
+def main():
+    n = int(input())
+    a = list(map(int, input().split()))
+    a.sort()
+
+    mid = (n - 1) // 2 # 坐标从零开始
+    ans = 0
+    for x in a:
+        ans += abs(x - a[mid])
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 推公式
+### 耍杂技的牛
+n 头牛要表演叠罗汉。每头牛有自己的重量 W 和力量 S。
+一头牛的**危险系数**定义为：排在它**上方**所有牛的重量之和，减去它自己的力量 S。
+求一种排列顺序，使得所有牛中的**最大危险系数**最小。
+
+1. **贪心策略:**  
+   将所有牛按照**重量(W)与力量(S)之和**，即W+S，**从小到大**排序。
+2. **证明 (邻项交换法):**  
+   对于任意相邻的两头牛 i 和 j，假设 i 在 j 上方。若交换它们，使得 j 在 i 上方，只有 i 和 j 的危险系数会改变。可以证明，当W_i + S_i < W_j + S_j时，将 i 放在 j 的上方，得到的最大危险系数一定不劣于交换后的情况。因此该排序策略最优。
+```python
+def main():
+    n = int(input())
+    cows = [list(map(int, input().split())) for _ in  range(n)]
+    cows.sort(key = lambda x: x[0] + x[1])
+    ans = - (10 ** 10)
+    res = 0
+    for (w,s) in cows:
+        ans = max(ans, res - s)
+        res += w
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
