@@ -318,3 +318,159 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+### 编辑距离
+
+给定两个字符串 A 和 B，求将字符串 A 变为字符串 B 所需要的**最少**操作次数。
+**允许的操作 (每种操作计为1次):**
+1. **删除 (Delete):** 删除 A 中的一个字符。
+2. **插入 (Insert):** 在 A 中插入一个字符。
+3. **修改 (Replace):** 将 A 中的一个字符修改成另一个。
+
+和上面最短编集距离做法一致， 枚举一下，判断一下
+
+```python
+def check(a, b: str) -> int:
+    n = len(a)
+    m = len(b)
+    a = " " + a
+    b = " " + b
+    f = [[0] * (m + 1) for _ in range(n + 1)]
+
+    for i in range(1, n + 1):
+        f[i][0] = i
+    for j in range(1, m + 1):
+        f[0][j] = j
+
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            if a[i] == b[j]:
+                f[i][j] = f[i-1][j-1]
+            else:
+                f[i][j] = min(f[i-1][j-1], f[i-1][j], f[i][j-1]) + 1
+    return f[n][m]
+
+def main():
+    n,m = map(int,input().split())
+    ss = [input() for _ in range(n)]
+    for _ in range(m):
+        target, limit= input().split()
+        limit = int(limit)
+
+        ans = 0
+        for s in ss:
+            if check(s, target) <= limit:
+                ans += 1
+
+        print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 区间DP
+
+### 石子合并
+在四周摆放着 N 堆石子。现要将石子有次序地合并成一堆。
+- **操作:**每次只能选择**相邻**的两堆石子合并成新的一堆。
+- **代价:**每次合并的代价为新的一堆中石子的总数。
+- **目标:**求将 N 堆石子合并成一堆的**最小总代价**和**最大总代价**。
+
+**状态转移方程:**
+- 枚举区间长度len从 2 到N。
+- 枚举区间左端点i，则右端点j = i + len - 1。
+- 枚举该区间的**最后一次合并**的分割点k(i <= k < j)。
+- **最小代价:** f\[i]\[j] = min(f\[i]\[k] + f\[k+1]\[j]) + (s[j] - s[i-1])
+- **最大代价:** g\[i]\[j] = max(g\[i]\[k] + g\[k+1]\[j]) + (s[j] - s[i-1])
+
+```python
+N = 10 ** 10
+def main():
+    n = int(input())
+    nums = list(map(int, input().split()))
+    sums = [0] * (n + 1)
+    for i in range(1, n + 1):
+        sums[i] = sums[i - 1] + nums[i - 1]
+
+    f = [[N] * (n + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        f[i][i] = 0
+    for length in range(1, n + 1):
+        for i in range(1, n - (length - 1) + 1):
+            j = i + length - 1
+            for k in range(i, j):
+                f[i][j] = min(f[i][j], f[i][k] + f[k + 1][j] + sums[j] - sums[i - 1])
+    print(f[1][n])
+if __name__ == "__main__":
+    main()
+```
+
+## 计数类DP
+
+### 整数划分
+将一个正整数n表示成一系列正整数之和，求一共有多少种不同的表示方法？
+**注意：**拆分方案中的数字顺序不同，视为同一种方案。
+
+**示例：**  
+n = 4的划分方案有 5 种：  
+{4}, {3,1}, {2,2}, {2,1,1}, {1,1,1,1}
+
+**模型转化**:
+    - **物品**:1, 2, 3, ..., n这n个正整数。
+    - **背包容量**:n。
+    - **物品属性**: 每个物品i的体积为i，可以无限次使用。
+    - **目标**: 求恰好装满容量为n的背包的**方案总数**。
+```python
+def main():
+    n = int(input())
+    f = [0] * (n + 1)
+    f[0] = 1
+    MOD = 10 ** 9 + 7
+    for i in range(1, n + 1):
+        for j in range(i, n + 1):
+            f[j] += f[j - i]
+            f[j] %= MOD
+
+    print(f[n])
+
+if __name__ == "__main__":
+    main()
+```
+
+## 状态压缩DP
+
+### 最短Hamilton路径
+给定一个n个点的带权无向完全图 (n ≤ 20)，点从0到n-1编号。
+求一条从点0出发，经过**每个点恰好一次**，最终到达点n-1的最短路径长度。
+
+**题解思路：状态压缩DP**
+由于n很小，这是使用状态压缩DP的典型信号。
+1. **核心思路：**  
+   用一个整数的二进制位来表示点的访问状态（即“状态压缩”），然后进行动态规划。
+2. **状态定义：**
+   f\[i]\[j]表示:
+    - i: 一个二进制数 (bitmask)，表示已经访问过的点的集合。若i的第k位为1，则表示点k已被访问。
+    - j: 当前路径的终点是点j。
+    - f\[i]\[j]的值：满足上述条件的所有路径中的**最短长度**。
+3. **状态转移方程：**  
+   f\[i]\[j] = min( f\[i ^ (1<<j)]\[k] + w\[k]\[j] )
+    - **解释**：要计算到达状态(i, j)的最短路径，我们可以枚举上一个点k。这个点k必须在不包含j的点集i ^ (1<<j)中。路径长度就是“到达状态(i ^ (1<<j), k)的最短路” 加上 “从k到j的距离w\[k]\[j]”。我们取所有可能的k中的最小值。
+```python
+MAX_INF = 10**18
+def main():
+    n = int(input())
+    dis = [list(map(int, input().split())) for _ in range(n)]
+
+    f = [[MAX_INF] * (n + 1) for _ in range(1 << n)]
+    f[1][0] = 0
+    for i in range(1, 1 << n):
+        for j in range(n):
+            if i >> j & 1 == 1:
+                for k in range(n):
+                    if ((i ^ (1<<j)) >> k & 1) ==1:
+                        f[i][j] = min(f[i ^ (1 << j)][k] + dis[k][j], f[i][j])
+
+    print(f[(1<<n) - 1][n - 1])
+if __name__ == "__main__":
+    main()
+```
