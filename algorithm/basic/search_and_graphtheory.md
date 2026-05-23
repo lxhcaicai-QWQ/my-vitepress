@@ -202,3 +202,52 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 拓扑排序
+
+### 拓扑排序
+给定一个n个点m条边的有向无环图 (DAG)，请求出该图的一个拓扑序列。
+- **输入:** 点数 n, 边数 m, 以及 m 条有向边 (x, y)。
+- **输出:** 一个长度为 n 的整数序列，表示一个合法的拓扑排序结果。
+  (拓扑序列：图中顶点的一种线性排序，使得对于任何从 u 到 v 的有向边，u 总是在 v 之前。)
+
+不断将**入度为 0**的点加入队列并输出，然后“删除”其所有出边（即将其指向的邻接点入度减一）。
+```python
+import collections
+
+
+def main():
+    n,m = map(int, input().split())
+
+    g = [[] for _ in range(n + 1)]
+    deg = [0] * (n +  1)
+    for _ in range(m):
+        a, b = map(int, input().split())
+        g[a].append(b)
+        deg[b] += 1
+
+
+    def _topo():
+        deque = collections.deque()
+        for i in range(1, n + 1):
+            if deg[i] == 0:
+                deque.append(i)
+
+        res = []
+        while len(deque) > 0:
+            x = deque.popleft()
+            res.append(x)
+            for y in g[x]:
+                deg[y] -= 1
+                if deg[y] == 0:
+                    deque.append(y)
+
+        if len(res) != n:
+            print(-1)
+        else:
+            print(*res)
+    _topo()
+
+if __name__ == "__main__":
+    main()
+```
