@@ -24,6 +24,7 @@ export default defineConfig({
         text: 'algorithm',
         items: [
           { text: 'ACM输入输出模板', link: '/algorithm/acm-python-io.md' },
+          { text: 'ACM数据结构模板', link: '/algorithm/acm-data-structure.md' },
           { text: '基础算法', link: '/algorithm/basic/basic_algorithms.md' },
           { text: '数据结构', link: '/algorithm/basic/data_structure.md' },
           { text: '搜索与图论', link: '/algorithm/basic/search_and_graphtheory.md' },
