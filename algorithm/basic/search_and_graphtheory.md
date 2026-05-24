@@ -251,3 +251,90 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## Dijkstra
+
+### Dijkstra求最短路 I
+给定一个n个点m条边的**正权有向图**，求从 1 号点到n号点的最短距离。
+**输入:**
+- 点数n, 边数m
+- m条边x, y, z(表示从x到y有一条权重为z的边)
+
+朴素 Dijkstra 算法**
+**核心思想:**  
+一个基于贪心策略的算法。每次从未被确定最短路径的点中，选择一个距离源点最近的点，并将其“确定”下来，然后用这个点去更新它所有邻居的距离。
+```python
+
+INF = 10 ** 10
+
+def main():
+    n,m = map(int, input().split())
+
+    g = [[INF] * (n + 1) for _ in range(n + 1)]
+    for _ in range(m):
+        a, b, c = map(int, input().split())
+        g[a][b] = min(g[a][b],c)
+
+    dis = [INF] * (n + 1)
+    def _dijkstra(st: int) -> None:
+        dis[st] = 0
+        vis = [False] * (n + 1)
+        for _ in range(n):
+            t: int = -1
+            for j in range(1,n + 1):
+                if not vis[j] and (t == -1 or dis[t] > dis[j]):
+                    t = j
+            vis[t] = True
+            for j in range(1, n + 1):
+                dis[j] = min(dis[j], dis[t] + g[t][j])
+
+    _dijkstra(1)
+    print(-1 if dis[n] == INF else dis[n])
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Dijkstra求最短路 II
+在一个包含n个点、m条边的**正权有向图**中，求源点1到其余所有点的最短路径。
+
+这是一个**稀疏图**问题，n和m的数据范围很大（例如达到1.5 × 10^5），朴素的O(n²)Dijkstra算法会超时。
+**核心算法：**使用**优先队列（小根堆）**优化的Dijkstra算法。
+
+```python
+import heapq
+
+
+def main():
+    n,m = map(int, input().split())
+
+    graph = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        a, b, c = map(int, input().split())
+        graph[a].append((b,c))
+
+
+    INF = float('inf')
+    dis = [INF] * (n + 1)
+    def _dijkstra(st: int) -> None:
+        dis[st] = 0
+        heap = [(0, 1)]
+        vis = [False] * (n + 1)
+        while heap:
+            d, x = heapq.heappop(heap)
+            if vis[x]:
+                continue
+            vis[x] = True
+            for y, z in graph[x]:
+                if dis[y] > dis[x] + z:
+                    dis[y] = dis[x] + z
+                    heapq.heappush(heap, (dis[y], y))
+
+    _dijkstra(1)
+c
+
+
+if __name__ == "__main__":
+    main()
+```
