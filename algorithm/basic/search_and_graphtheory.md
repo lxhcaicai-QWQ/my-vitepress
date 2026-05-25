@@ -338,3 +338,154 @@ c
 if __name__ == "__main__":
     main()
 ```
+
+## bellman-ford
+
+### 有边数限制的最短路
+在一个包含n个点m条边的有向图中，求从起点1到终点n，**最多**经过k条边的最短距离。
+
+Bellman-Ford 算法的循环松弛操作天然地符合边数限制。第i轮迭代更新后，dist[x]的值代表了从起点到x最多经过i条边的最短路。因此，我们只需执行k轮迭代。
+**关键步骤：**
+1. **初始化：** dist数组，dist[起点] = 0，其余为无穷大。
+2. **迭代k次：** for循环k次。
+3. **备份：** 在每次迭代开始时，复制dist数组到backup数组。
+4. **松弛：** 遍历所有m条边(a, b, w)，使用backup数组的值进行松弛操作：  
+   dist[b] = min(dist[b], backup[a] + w)  
+   (使用backup是为了防止在同一次迭代中发生“串联”更新，从而严格保证路径长度不超过当前迭代次数)
+5. **结果：** k次迭代后，dist[终点]即为答案。若值仍为无穷大，则表示不可达。
+```python
+import copy
+INF = 10**10
+
+def main():
+    n, m, k = map(int, input().split())
+    edges = []
+    for _ in range(m):
+        x, y, z = map(int,input().split())
+        edges.append((x, y, z))
+
+    dis = [INF] * (n + 1)
+    dis[1] = 0
+    def _bellmanford(k: int):
+
+        for _ in range(k):
+            last = copy.deepcopy(dis)
+            for j in range(m):
+                x, y, z = edges[j]
+                dis[y] = min(dis[y], last[x] + z)
+
+    _bellmanford(k)
+    if dis[n] > INF//2:
+        print("impossible")
+    else:
+        print(dis[n])
+
+if __name__ == "__main__":
+    main()
+```
+
+## bellman-ford
+
+### spfa求最短路
+给定一个n个点m条边的**有向图**，图中可能包含**负权边**。
+求从 1 号点到n号点的最短距离。如果无法从 1 到达n，则输出 "impossible"。
+
+基于 Bellman-Ford 的队列优化。只将那些距离被成功“松弛”（变小）的顶点加入队列，因为只有它们才可能去更新其它顶点的距离。
+```python
+import collections
+
+INF = 10 ** 10
+
+def main():
+    n,m = map(int, input().split())
+
+    graph = [[] for _ in range(n + 1)]
+
+    for _ in range(m):
+        a,b,c = map(int, input().split())
+        graph[a].append((b,c))
+
+    dis = [INF] * (n + 1)
+
+    def _spfa(st: int):
+        sta = [False] * (n + 1)
+        deque = collections.deque()
+        deque.append(st)
+        dis[st] = 0
+        while len(deque) > 0:
+            x = deque.popleft()
+            sta[x] = False
+            for y,z in graph[x]:
+                if dis[y] > dis[x] + z:
+                    dis[y] = dis[x] + z
+                    if not sta[y]:
+                        sta[y] = True
+                        deque.append(y)
+
+    _spfa(1)
+    if dis[n] == INF:
+        print("impossible")
+    else:
+        print(dis[n])
+
+if __name__ == "__main__":
+    main()
+```
+
+### spfa判断负环
+给定一个包含**负权边**的有向图，判断图中是否存在**负环**。
+(负环：一个边权之和为负数的环路)
+**输入:** n个点,m条边的有向图。  
+**输出:** Yes(存在负环) 或No(不存在负环)。
+
+在一个含有n个节点的图中，任何不含环的简单路径最多只包含n-1条边。如果从源点到某个节点x的最短路径包含了n条或更多的边，那么这条路径上必然有重复的节点，即构成了环。由于SPFA总是在寻找更短的路径，这必然是一个**负环**。
+
+1. **额外数组:** 使用cnt[]数组记录每个点到源点（虚拟源点）的最短路径所包含的边数。
+2. **初始化:**将**所有节点**(1 to n) 加入队列。这是为了防止图不连通，确保能检测到所有可能的负环。
+3. **SPFA松弛:**
+    - 当更新dist[j] = dist[t] + w时，也更新边数cnt[j] = cnt[t] + 1。
+4. **判断负环:**
+    - 在每次更新cnt[j]后，立刻检查if (cnt[j] >= n)。
+    - 如果条件成立，说明找到了一个包含至少n条边的路径，图中必定存在负环，返回Yes。
+5. **正常结束:** 如果队列为空算法仍未返回，说明不存在负环，返回No。
+```python
+import collections
+
+INF = 10 ** 10
+def main():
+    n,m = map(int,input().split())
+
+    graph = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        a,b,c = map(int,input().split())
+        graph[a].append((b,c))
+
+    for i in range(1, n + 1):
+        graph[0].append((i, 0))
+
+    dis = [INF] * (n + 1)
+    def _spfa(st: int) -> str:
+        dis[st] = 0
+        cnt = [0] * (n + 1)
+        sta = [False] * (n + 1)
+        deque = collections.deque()
+        deque.append(st)
+        while len(deque) > 0:
+            x = deque.popleft()
+            sta[x] = False
+
+            for y,z in graph[x]:
+                if dis[y] > dis[x] + z:
+                    dis[y] = dis[x] + z
+                    cnt[y] = cnt[x] + 1
+                    if cnt[y] > n:
+                        return "Yes"
+                    if not sta[y]:
+                        deque.append(y)
+        return "No"
+
+
+    print(_spfa(0))
+if __name__ == "__main__":
+    main()
+```
