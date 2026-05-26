@@ -489,3 +489,98 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## Floyd
+
+### Floyd求最短路
+给定一个包含 n 个点和 m 条边的**有向图**。  
+接下来有 k 次查询，每次查询给定两个顶点 x 和 y，求从 x 到 y 的**最短路径长度**。
+如果路径不存在，则输出 "impossible"。
+
+动态规划。d\[i]\[j]表示从i到j的最短路径。算法通过枚举一个**中间点 k**，尝试用i -> k -> j这条路径来更新i到j的最短距离。
+
+**状态转移方程：** d\[i]\[j] = min(d\[i]\[j], d\[i]\[k] + d\[k]\[j])
+
+**步骤：**
+1. **初始化邻接矩阵d：**
+   - d\[i]\[i] = 0
+   - 若存在i到j的边，权重为w，则d\[i]\[j] = w
+   - 其他情况d\[i]\[j] = ∞(设为一个极大值，如0x3f3f3f3f)
+```python
+INF = 10**10
+
+def main():
+    n,m,q = map(int,input().split())
+    dis = [[INF] * (n + 1) for _ in range(n + 1)]
+    for i in range(n + 1):
+        dis[i][i] = 0
+
+    for _ in range(m):
+        a,b,c = map(int, input().split())
+        dis[a][b] = min(dis[a][b],c)
+
+    for k in range(1,n + 1):
+        for i in range(1, n + 1):
+            for j in range(1, n + 1):
+                dis[i][j] = min(dis[i][j],dis[i][k] + dis[k][j])
+
+    for _ in range(q):
+        x, y = map(int, input().split())
+        if dis[x][y] >= INF // 2:
+            print("impossible")
+        else:
+            print(dis[x][y])
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Prim
+
+### Prim算法求最小生成树
+- 给定一个 n 个点 m 条边的带权无向图。
+- 求该图的最小生成树（MST）的权重和。
+- 如果图不连通，无法构成生成树，则输出 "impossible"。
+
+贪心。从一个起点开始，每次选择一个离「已选点的集合」最近的「未选点」加入生成树，直到所有点都被选中。
+```python
+INF = 10 ** 10
+def main():
+    n, m = map(int, input().split())
+    g = [[INF] * (n + 1) for _ in range(n + 1)]
+    for _ in range(m):
+        x,y,z = map(int, input().split())
+        g[x][y] = g[y][x] = min(g[x][y], z)
+
+    def _prime():
+        dis = [INF] * (n + 1)
+        vis = [False] * (n + 1)
+        res = 0
+        for i in range(n):
+            t = -1
+            for j in range(1, n + 1):
+                if not vis[j] and (t == -1 or dis[t] > dis[j]):
+                    t = j
+
+            if i > 0 and dis[t] == INF:
+                return INF
+
+            if i > 0:
+                res += dis[t]
+            vis[t] = True
+
+            for j in range(1, n + 1):
+                dis[j] = min(dis[j], g[t][j])
+
+        return res
+
+    res = _prime()
+
+    if res == INF:
+        print("impossible")
+    else:
+        print(res)
+if __name__ == "__main__":
+    main()
+```
