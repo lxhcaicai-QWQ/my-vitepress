@@ -584,3 +584,154 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+## Kruskal
+
+### Kruskal算法求最小生成树
+一个包含n个点和m条边的带权无向图。
+**目标:**  
+求该图的最小生成树 (MST) 中所有边的权重之和。
+
+贪心。按边的权重从小到大进行选择，只要当前选择的边不会与已选的边构成回路，就将其加入最小生成树。
+**关键数据结构：**  
+并查集 (Disjoint Set Union)，用于快速判断两个顶点是否已连通（即加入新边是否会形成回路）。
+```python
+
+def main():
+    n, m = map(int, input().split())
+    edges = []
+    for _ in range(m):
+        a,b,c = map(int, input().split())
+        edges.append((a,b,c))
+
+    def _kruskal():
+        fa = list(range(n + 1))
+        def _find(x: int):
+            if fa[x] == x:
+                return x
+            else:
+                fa[x] = _find(fa[x])
+                return fa[x]
+
+        edges.sort(key=lambda x: x[2])
+        ans = 0
+        cnt = 0
+        for a,b,c in edges:
+            a = _find(a)
+            b = _find(b)
+            if a != b:
+                ans += c
+                cnt += 1
+                fa[a] = b
+
+            if cnt == n -1:
+                break
+
+        if cnt != n -1:
+            print("impossible")
+        else:
+            print(ans)
+
+    _kruskal()
+
+if __name__ == "__main__":
+    main()
+```
+
+
+## 染色法判定二分图
+
+### 染色法判定二分图
+给定一个n个点m条边的无向图，判断这个图是否是二分图。
+（二分图定义：能将所有顶点划分成两个独立的集合，使得所有边的两个端点都分别属于这两个集合。）
+
+dfs尝试用两种颜色（例如 1 和 2）给图的所有顶点染色，并检查是否存在一条边的两个端点颜色相
+**判定条件：**
+- 若遍历完所有连通分量都没有发生颜色冲突，则该图是**二分图**。
+- 只要有一次颜色冲突，就说明图中存在**奇数环**，该图**不是二分图**。
+```python
+import sys
+
+sys.setrecursionlimit(10**5)
+
+def main():
+    n,m = map(int, input().split())
+
+    g = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        a, b = map(int, input().split())
+        g[a].append(b)
+        g[b].append(a)
+
+    color = [0] * (n + 1)
+
+    def _dfs(x: int, c: int) -> bool:
+        color[x] = c
+        for y in g[x]:
+            if color[y] == 0:
+                 if not _dfs(y, 3 - c):
+                     return False
+            elif color[y] == color[x]:
+                return False
+        return True
+
+
+    for i in range(1, n + 1):
+        if color[i] == 0:
+            if not _dfs(i, 1):
+                print("No")
+                return
+
+    print("Yes")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+
+
+## 匈牙利算法
+
+### 二分图的最大匹配
+给定一个二分图，图的左部有n1个点，右部有n2个点，以及m条边连接左右部点。
+**目标：**
+求该二分图的最大匹配数。
+
+“先到先得，能让则让”。依次为左部的每个点u寻找一个右部点v进行匹配。
+如果v已被其他点u'匹配，则尝试为u'寻找一个新的匹配点（递归），如果能成功“让出”位置，则u和v匹配成功。这个过程本质上是在寻找**增广路**。
+```python
+def main():
+    n1, n2, m = map(int, input().split())
+    g = [[] for _ in range(n1 + n2 +  2)]
+
+    for _ in range(m):
+        a, b = map(int, input().split())
+        g[a].append(b + n1)
+        g[b + n1].append(a)
+
+    vis = [0] * (n1 + n2 + 2)
+    match = [0] * (n1 + n2 + 2)
+    cnt = 0
+    def _dfs(x: int) -> bool:
+        for y in g[x]:
+            if vis[y] != cnt:
+                vis[y] = cnt
+                if match[y] == 0 or _dfs(match[y]):
+                    match[y] = x
+                    return True
+        return False
+
+    ans = 0
+    for i in range(1, n1 + 1):
+        cnt += 1
+        if match[i] == 0:
+            if _dfs(i):
+                ans +=1
+
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
