@@ -28,6 +28,7 @@ export default defineConfig({
           { text: '基础算法', link: '/algorithm/basic/basic_algorithms.md' },
           { text: '数据结构', link: '/algorithm/basic/data_structure.md' },
           { text: '搜索与图论', link: '/algorithm/basic/search_and_graphtheory.md' },
+          { text: '数学问题', link: '/algorithm/basic/math_problem.md' },
           { text: '动态规划', link: '/algorithm/basic/dynamic_programming.md' },
           { text: '贪心', link: '/algorithm/basic/greedy_problem.md' },
         ]
