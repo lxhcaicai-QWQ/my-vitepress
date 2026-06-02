@@ -401,3 +401,128 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 求组合数
+
+### 求组合数 I
+给定n组询问，每组询问给定两个整数a, b。
+求C(a, b) mod (10^9 + 7)的值。
+
+1. **预处理：** 利用组合数递推公式C(i, j) = C(i-1, j) + C(i-1, j-1)，建立一个N*N的二维数组C来存储组合数。
+   - **边界条件：** C(i, 0) = 1
+   - **递推：** C\[i]\[j] = (C\[i-1]\[j-1] + C\[i-1]\[j]) % p
+```python
+def main():
+    MOD = 10 ** 9 + 7
+    N = 2010
+    c = [[0] * (N + 1) for _ in range(N + 1)]
+    def _calculate():
+        for i in range(0, N + 1):
+            for j in range(0, i + 1):
+                if j == 0:
+                    c[i][j] = 1
+                else:
+                    c[i][j] = (c[i - 1][j - 1] + c[i - 1][j]) % MOD
+
+    _calculate()
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        print(c[a][b])
+
+if __name__ == "__main__":
+    main()
+```
+
+
+### 求组合数 II
+- **输入:** n组a, b。
+- **要求:** 对于每组输入，计算 C(a, b) mod (10^9 + 7) 的值。
+
+组合数公式 C(a, b) = a! / (b! * (a-b)!)。在模p意义下，除法需要转换为乘以**乘法逆元**。  
+C(a, b) ≡ fact[a] * inv(fact[b]) * inv(fact[a-b]) (mod p)
+
+```python
+def main():
+    MOD = 10 ** 9 + 7
+    N = 10 ** 5 + 10
+
+    def _ksm(a, b: int) -> int:
+        a %= MOD
+        res = 1
+        while b!=0:
+            if b & 1 == 1:
+                res = res * a % MOD
+            a = a * a % MOD
+            b >>= 1
+        return res
+
+    fac = [1] * N
+    inf = [1] * N
+    def _init():
+        for i in range(1, N):
+            fac[i] = fac[i - 1] * i % MOD
+            inf[i] = inf[i-1] * _ksm(i, MOD - 2) % MOD
+
+    _init()
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        print(fac[a] * inf[b] % MOD * inf[a - b] % MOD)
+
+if __name__ == "__main__":
+    main()
+```
+
+
+### 求组合数 III
+给定整数 a, b, p。 计算组合数 C(a, b) mod p 的值。
+
+**背面 (Back)**
+**核心算法：卢卡斯定理 (Lucas's Theorem)**
+**适用场景**  
+a, b 很大，但模数 p 较小的组合数问题。
+**定理公式**  
+C(a, b) ≡ C(a/p, b/p) × C(a mod p, b mod p) (mod p)
+```python
+def main():
+
+    def _ksm(a,b,p: int) -> int:
+        a %= p
+        res = 1
+        while b!=0:
+            if b & 1 == 1:
+                res = res * a % p
+            a = a * a % p
+            b >>= 1
+        return res
+
+    def cal(a, b, p: int) -> int:
+        if b > a:
+            return 0
+        if b > a - b:
+            b = a - b
+        x = 1
+        y = 1
+        j = a
+        for i in range(1,b + 1):
+            y = y * i % p
+            x = x * j % p
+            j -= 1
+
+        return x * _ksm(y, p - 2, p) % p
+
+    def _lucas(n, m, p: int) -> int:
+        if n < p and m < p:
+            return cal(n, m, p)
+        else:
+            return cal(n % p, m % p, p) * _lucas(n // p, m // p, p) % p
+
+    n = int(input())
+    for _ in range(n):
+        a, b, p = map(int, input().split())
+        print(_lucas(a, b, p))
+
+if __name__ == "__main__":
+    main()
+```
