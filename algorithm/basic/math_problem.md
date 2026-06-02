@@ -260,3 +260,269 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 欧拉函数
+
+### 欧拉函数
+给定 n 个正整数 aᵢ，分别求出每个数的欧拉函数 φ(aᵢ) 的值。
+
+一个正整数 N 的欧拉函数值可以通过其质因数分解来计算：  
+若 N = p₁ᵃ¹ * p₂ᵃ² * ... * pₖᵃᵏ (其中 pᵢ 是不同的质数)  
+则**φ(N) = N * (1 - 1/p₁) * (1 - 1/p₂) * ... * (1 - 1/pₖ)**
+
+该算法本质上是在对 N 进行质因数分解的同时，计算欧拉函数值
+```python
+
+def main():
+    n = int(input())
+
+    def _get_phi(x: int) -> int:
+        ans = x
+        i = 2
+        while i * i <= x:
+            if x % i == 0:
+                ans = ans // i * (i - 1)
+                while x % i == 0:
+                    x //= i
+            i += 1
+        if x > 1:
+            ans = ans // x * (x - 1)
+        return ans
+
+    for _ in range(n):
+        x = int(input())
+        print(_get_phi(x))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 筛法求欧拉函数
+给定一个正整数 n，你需要计算 1 到 n 中所有数的欧拉函数之和。
+
+使用**线性筛（欧拉筛）**在 O(n) 时间内预处理出 1 到 n 所有数的欧拉函数值，然后求和。
+```python
+
+def main():
+    n = int(input())
+
+    phi = [0] * (n + 1)
+    primes = []
+    def _get_prime(n: int):
+        vis = [False] * (n + 1)
+        phi[1] = 1
+        for i in range(2,n + 1):
+            if not vis[i]:
+                phi[i] = i - 1
+                primes.append(i)
+
+            for x in primes:
+                if i * x > n:
+                    break
+                vis[i * x] = True
+                if i % x == 0:
+                    phi[i * x] = phi[i] * x
+                else:
+                    phi[i * x] = phi[i] * (x - 1)
+
+    _get_prime(n)
+    print(sum(phi))
+
+if __name__ == "__main__":
+    main()
+```
+
+
+## 快速幂
+
+### 快速幂
+给定三个整数 a, b, p，求 a*b mod p 的值。
+
+指数 b 的值可能非常大（例如 10<sup>9</sup>），直接循环 b 次进行乘法会超时。
+
+利用指数b的二进制表示，将a^b的计算进行拆分。  
+任何一个整数b都可以写成 2 的幂次之和。  
+
+例如：a^13 = a^(8+4+1) = a^8 * a^4 * a^1。
+```python
+
+def main():
+
+    def _ksm(a,b,p: int) -> int:
+        res = 1
+        a %= p
+        while b!=0:
+            if b&1 == 1:
+                res = res * a % p
+            a = a * a % p
+        return res
+
+    n = int(input())
+    for _ in range(n):
+        a, b, p = map(int, input())
+        print(_ksm(a, b, p))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 快速幂求逆元
+给定n组a和p，其中p是**质数**。
+对于每组数据，求a模p的乘法逆元。
+
+- **定理内容:** 若p是一个质数，且整数a不是p的倍数（即a与p互质），则有a^(p-1) ≡ 1 (mod p)。
+- **不存在条件:** 如果a是p的倍数，则逆元不存在。
+```python
+def main():
+    def _kms(a,b,p: int) -> int:
+        res = 1
+        a %=p
+        while b!=0:
+            if b&1 == 1:
+                res = res * a % p
+            a = a * a % p
+            b >>= 1
+        return res
+
+    def _gcd(a, b: int) -> int:
+        if b == 0:
+            return a
+        return _gcd(b, a%b)
+
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        if _gcd(a,b) == 1:
+            print(_kms(a,b -2, b))
+        else:
+            print("impossible")
+
+if __name__ == "__main__":
+    main()
+```
+
+## 求组合数
+
+### 求组合数 I
+给定n组询问，每组询问给定两个整数a, b。
+求C(a, b) mod (10^9 + 7)的值。
+
+1. **预处理：** 利用组合数递推公式C(i, j) = C(i-1, j) + C(i-1, j-1)，建立一个N*N的二维数组C来存储组合数。
+   - **边界条件：** C(i, 0) = 1
+   - **递推：** C\[i]\[j] = (C\[i-1]\[j-1] + C\[i-1]\[j]) % p
+```python
+def main():
+    MOD = 10 ** 9 + 7
+    N = 2010
+    c = [[0] * (N + 1) for _ in range(N + 1)]
+    def _calculate():
+        for i in range(0, N + 1):
+            for j in range(0, i + 1):
+                if j == 0:
+                    c[i][j] = 1
+                else:
+                    c[i][j] = (c[i - 1][j - 1] + c[i - 1][j]) % MOD
+
+    _calculate()
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        print(c[a][b])
+
+if __name__ == "__main__":
+    main()
+```
+
+
+### 求组合数 II
+- **输入:** n组a, b。
+- **要求:** 对于每组输入，计算 C(a, b) mod (10^9 + 7) 的值。
+
+组合数公式 C(a, b) = a! / (b! * (a-b)!)。在模p意义下，除法需要转换为乘以**乘法逆元**。  
+C(a, b) ≡ fact[a] * inv(fact[b]) * inv(fact[a-b]) (mod p)
+
+```python
+def main():
+    MOD = 10 ** 9 + 7
+    N = 10 ** 5 + 10
+
+    def _ksm(a, b: int) -> int:
+        a %= MOD
+        res = 1
+        while b!=0:
+            if b & 1 == 1:
+                res = res * a % MOD
+            a = a * a % MOD
+            b >>= 1
+        return res
+
+    fac = [1] * N
+    inf = [1] * N
+    def _init():
+        for i in range(1, N):
+            fac[i] = fac[i - 1] * i % MOD
+            inf[i] = inf[i-1] * _ksm(i, MOD - 2) % MOD
+
+    _init()
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        print(fac[a] * inf[b] % MOD * inf[a - b] % MOD)
+
+if __name__ == "__main__":
+    main()
+```
+
+
+### 求组合数 III
+给定整数 a, b, p。 计算组合数 C(a, b) mod p 的值。
+
+**背面 (Back)**
+**核心算法：卢卡斯定理 (Lucas's Theorem)**
+**适用场景**  
+a, b 很大，但模数 p 较小的组合数问题。
+**定理公式**  
+C(a, b) ≡ C(a/p, b/p) × C(a mod p, b mod p) (mod p)
+```python
+def main():
+
+    def _ksm(a,b,p: int) -> int:
+        a %= p
+        res = 1
+        while b!=0:
+            if b & 1 == 1:
+                res = res * a % p
+            a = a * a % p
+            b >>= 1
+        return res
+
+    def cal(a, b, p: int) -> int:
+        if b > a:
+            return 0
+        if b > a - b:
+            b = a - b
+        x = 1
+        y = 1
+        j = a
+        for i in range(1,b + 1):
+            y = y * i % p
+            x = x * j % p
+            j -= 1
+
+        return x * _ksm(y, p - 2, p) % p
+
+    def _lucas(n, m, p: int) -> int:
+        if n < p and m < p:
+            return cal(n, m, p)
+        else:
+            return cal(n % p, m % p, p) * _lucas(n // p, m // p, p) % p
+
+    n = int(input())
+    for _ in range(n):
+        a, b, p = map(int, input().split())
+        print(_lucas(a, b, p))
+
+if __name__ == "__main__":
+    main()
+```
