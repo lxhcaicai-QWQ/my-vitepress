@@ -331,3 +331,73 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+## 快速幂
+
+### 快速幂
+给定三个整数 a, b, p，求 a*b mod p 的值。
+
+指数 b 的值可能非常大（例如 10<sup>9</sup>），直接循环 b 次进行乘法会超时。
+
+利用指数b的二进制表示，将a^b的计算进行拆分。  
+任何一个整数b都可以写成 2 的幂次之和。  
+
+例如：a^13 = a^(8+4+1) = a^8 * a^4 * a^1。
+```python
+
+def main():
+
+    def _ksm(a,b,p: int) -> int:
+        res = 1
+        a %= p
+        while b!=0:
+            if b&1 == 1:
+                res = res * a % p
+            a = a * a % p
+        return res
+
+    n = int(input())
+    for _ in range(n):
+        a, b, p = map(int, input())
+        print(_ksm(a, b, p))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 快速幂求逆元
+给定n组a和p，其中p是**质数**。
+对于每组数据，求a模p的乘法逆元。
+
+- **定理内容:** 若p是一个质数，且整数a不是p的倍数（即a与p互质），则有a^(p-1) ≡ 1 (mod p)。
+- **不存在条件:** 如果a是p的倍数，则逆元不存在。
+```python
+def main():
+    def _kms(a,b,p: int) -> int:
+        res = 1
+        a %=p
+        while b!=0:
+            if b&1 == 1:
+                res = res * a % p
+            a = a * a % p
+            b >>= 1
+        return res
+
+    def _gcd(a, b: int) -> int:
+        if b == 0:
+            return a
+        return _gcd(b, a%b)
+
+    n = int(input())
+    for _ in range(n):
+        a, b = map(int, input().split())
+        if _gcd(a,b) == 1:
+            print(_kms(a,b -2, b))
+        else:
+            print("impossible")
+
+if __name__ == "__main__":
+    main()
+```
