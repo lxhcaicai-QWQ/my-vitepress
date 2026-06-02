@@ -260,3 +260,74 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 欧拉函数
+
+### 欧拉函数
+给定 n 个正整数 aᵢ，分别求出每个数的欧拉函数 φ(aᵢ) 的值。
+
+一个正整数 N 的欧拉函数值可以通过其质因数分解来计算：  
+若 N = p₁ᵃ¹ * p₂ᵃ² * ... * pₖᵃᵏ (其中 pᵢ 是不同的质数)  
+则**φ(N) = N * (1 - 1/p₁) * (1 - 1/p₂) * ... * (1 - 1/pₖ)**
+
+该算法本质上是在对 N 进行质因数分解的同时，计算欧拉函数值
+```python
+
+def main():
+    n = int(input())
+
+    def _get_phi(x: int) -> int:
+        ans = x
+        i = 2
+        while i * i <= x:
+            if x % i == 0:
+                ans = ans // i * (i - 1)
+                while x % i == 0:
+                    x //= i
+            i += 1
+        if x > 1:
+            ans = ans // x * (x - 1)
+        return ans
+
+    for _ in range(n):
+        x = int(input())
+        print(_get_phi(x))
+
+if __name__ == "__main__":
+    main()
+```
+
+### 筛法求欧拉函数
+给定一个正整数 n，你需要计算 1 到 n 中所有数的欧拉函数之和。
+
+使用**线性筛（欧拉筛）**在 O(n) 时间内预处理出 1 到 n 所有数的欧拉函数值，然后求和。
+```python
+
+def main():
+    n = int(input())
+
+    phi = [0] * (n + 1)
+    primes = []
+    def _get_prime(n: int):
+        vis = [False] * (n + 1)
+        phi[1] = 1
+        for i in range(2,n + 1):
+            if not vis[i]:
+                phi[i] = i - 1
+                primes.append(i)
+
+            for x in primes:
+                if i * x > n:
+                    break
+                vis[i * x] = True
+                if i % x == 0:
+                    phi[i * x] = phi[i] * x
+                else:
+                    phi[i * x] = phi[i] * (x - 1)
+
+    _get_prime(n)
+    print(sum(phi))
+
+if __name__ == "__main__":
+    main()
+```
