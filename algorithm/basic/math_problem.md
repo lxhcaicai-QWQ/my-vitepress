@@ -575,3 +575,45 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## 容斥原理
+### 能被整除的数
+给定一个整数n和m个互不相同的质数p₁, p₂, ..., pₘ。
+求在1到n的整数中，**至少能被**这m个质数中的**一个**整除的数的个数。
+
+问题等价于求m个集合的并集大小。其中，集合Sᵢ是[1, n]范围内能被质数pᵢ整除的数的集合。
+
+**应用容斥原理：**
+- **加上**所有单个质数的倍数个数。
+- **减去**所有两个不同质数乘积的倍数个数。
+- **加上**所有三个不同质数乘积的倍数个数。
+- ... 如此交替，奇加偶减。
+```python
+def main():
+    n,m = map(int, input().split())
+
+    p = list(map(int, input().split()))
+
+    ans = 0
+    for i in range(1, 1<<m):
+        res = 1
+        count = 0
+        check = True
+        for j in range(m):
+            if i >> j & 1 == 1:
+                if res * p[j] > n:
+                    check = False
+                    break
+                res *= p[j]
+                count += 1
+
+        if check:
+            if count % 2 == 1:
+                ans += n // res
+            else:
+                ans -= n // res
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
