@@ -526,3 +526,268 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+### 求组合数 IV
+给定整数 a, b 和素数 p。求 C(a, b) mod p 的值。
+**关键约束 (Key Constraints)**
+- a,b范围极大 (可达 10^18)
+- p范围较小 (≤ 10^5)
+
+线性筛素数：用欧拉筛求出  1∼a 之间的所有素数。
+
+求每个素数的指数：遍历所有筛出的素数p，利用勒让德定理计算
+```python
+
+def main():
+    N = 5050
+    vis = [False] * N
+    prime = []
+    def _get_prime(n: int):
+        for i in range(2, n + 1):
+            if not vis[i]:
+                prime.append(i)
+            for x in prime:
+                if i * x > n:
+                    break
+                vis[i * x] = True
+                if i % x == 0:
+                    break
+
+    def get(n, p: int) -> int:
+        res = 0
+        while n != 0:
+            res += n // p
+            n //= p
+        return res
+
+
+    a,b = map(int, input().split())
+    _get_prime(a)
+
+    ans = 1
+    for p in prime:
+        count = get(a, p) - get(a - b, p) - get(b, p)
+        ans = ans * (p ** count)
+
+    print(ans)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## 容斥原理
+### 能被整除的数
+给定一个整数n和m个互不相同的质数p₁, p₂, ..., pₘ。
+求在1到n的整数中，**至少能被**这m个质数中的**一个**整除的数的个数。
+
+问题等价于求m个集合的并集大小。其中，集合Sᵢ是[1, n]范围内能被质数pᵢ整除的数的集合。
+
+**应用容斥原理：**
+- **加上**所有单个质数的倍数个数。
+- **减去**所有两个不同质数乘积的倍数个数。
+- **加上**所有三个不同质数乘积的倍数个数。
+- ... 如此交替，奇加偶减。
+```python
+def main():
+    n,m = map(int, input().split())
+
+    p = list(map(int, input().split()))
+
+    ans = 0
+    for i in range(1, 1<<m):
+        res = 1
+        count = 0
+        check = True
+        for j in range(m):
+            if i >> j & 1 == 1:
+                if res * p[j] > n:
+                    check = False
+                    break
+                res *= p[j]
+                count += 1
+
+        if check:
+            if count % 2 == 1:
+                ans += n // res
+            else:
+                ans -= n // res
+    print(ans)
+
+if __name__ == "__main__":
+    main()
+```
+
+## 博弈论
+### Nim游戏
+- 有n堆石子，数量分别为a_1, a_2, ..., a_n
+- 两名玩家轮流操作。
+- 每次操作可从**任意一堆**石子中取走**至少一个**。
+- 无法操作者（所有石子堆都为空）判负。
+
+给定初始局面，先手是否必胜？
+
+**题解思路：**
+这是经典的**公平组合游戏 (ICG)**，其结论由**Bouton定理**给出。
+**核心方法：**计算所有堆石子数量的**异或和 (XOR Sum)**，也称为**Nim和 (Nim-Sum)**。
+令S = a_1 ⊕ a_2 ⊕ ... ⊕ a_n(⊕ 为按位异或运算符)。
+**结论：**
+- 若异或和S ≠ 0，则该局面为**必胜态**，**先手必胜**(回答 "Yes")。
+- 若异或和S = 0，则该局面为**必败态**，**先手必败**(回答 "No")。
+```python
+
+def main():
+    n = int(input())
+    a = list(map(int, input().split()))
+    ans = 0
+    for x in a:
+        ans ^= x
+
+    if ans == 0:
+        print("No")
+    else:
+        print("Yes")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 台阶-Nim游戏
+**题目描述:**  
+有 N 级台阶，每级台阶上放着若干石子。
+**操作规则:**  
+玩家轮流操作，每次可以从任意第i级台阶上取任意数量的石子，并将其移动到第i-1级台阶。
+**特殊规则:**  
+从第 1 级台阶移动的石子（即移动到第 0 级）被视为移出游戏。
+**目标:**  
+最后无法操作者为输家。判断先手是否必胜。
+
+**题解思路**
+**核心思想：转化为经典Nim游戏**
+1. **区分台阶：**博弈的关键在于**奇数**编号的台阶和**偶数**编号的台阶。
+2. **偶数台阶的作用：**偶数台阶上的石子堆是“安全的”或“无效的”。因为当一方将石子从偶数台阶i移到奇数台阶i-1时，另一方总可以立即将**同样数量**的石子从i-1移到i-2（另一个偶数台阶或移出游戏），从而抵消前者的操作，局面本质不变。
+3. **奇数台阶的作用：**只有将石子从**奇数台阶**移到偶数台阶，才真正改变了博弈的局面，相当于在经典的Nim游戏中取走了石子。
+   **解法：**  
+   游戏等价于只对所有**奇数台阶 (1, 3, 5, ...)**上的石子堆进行一次**Nim游戏**。
+- **计算方法：**将所有位于**奇数台阶**上的石子数量进行**异或和 (Nim-sum)**计算。
+- **结论：**
+   - 若异或和**不为 0**，则先手**必胜**。
+   - 若异或和**为 0**，则先手**必败**。
+```python
+def main():
+    n = int(input())
+    a = list(map(int, input().split()))
+    ans = 0
+    for i in range(n):
+        if i % 2 == 0:
+            ans ^= a[i]
+
+    if ans != 0:
+        print("Yes")
+    else:
+        print("No")
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+### 集合-Nim游戏
+有 n 堆石子，每堆有一定数量。
+与标准 Nim 游戏不同的是，**每一堆石子都关联一个独立的、允许取走的数量集合 S**。
+玩家轮流操作，每次选择一堆，并从中取走 k 个石子，k 必须属于该堆的 S 集合。无法操作者为负。
+判断先手胜负。
+
+1. **SG 定理:**整个游戏的 SG 值是所有 n 堆石子各自 SG 值的**异或和**。  
+   SG(总) = sg(堆1) ^ sg(堆2) ^ ... ^ sg(堆n)
+2. **胜负判断:**
+   - 若SG(总) != 0，则先手**必胜**。
+   - 若SG(总) == 0，则先手**必败**。
+3. **计算单堆的 SG 值:**  
+   对于一堆数量为x的石子，其 SG 值sg(x)的计算公式为：  
+   sg(x) = mex({sg(x-k) | k ∈ S 且 x-k ≥ 0})
+   - S是该堆允许的操作集合。
+
+```python
+def main():
+    N = 10 ** 4 + 10
+    m = int(input())
+    s = list(map(int, input().split()))
+
+    n = int(input())
+    f = [-1] * N
+    def _sg(x: int) -> int:
+        if f[x] != -1:
+            return f[x]
+        st = set()
+        for a in s:
+            if x >= a:
+                st.add(_sg(x - a))
+        i = 0
+        while True:
+            if i not in st:
+                f[x] = i
+                return f[x]
+            i += 1
+
+    ans = 0
+    h = list(map(int, input().split()))
+    for x in h:
+        ans ^= _sg(x)
+
+    if ans != 0:
+        print("Yes")
+    else:
+        print("No")
+
+if __name__ == "__main__":
+    main()
+```
+
+### 拆分-Nim游戏
+给定n堆石子。两人轮流操作，每次可任选一堆石子，将其拆分成两堆**非空**的石子。  
+当所有石子堆的数量都为1时，无法再操作，该轮到的人判负。
+
+判断先手是否必胜。判断先手是否必胜。
+这是一个公平组合游戏，其结果可以通过计算游戏状态的SG函数值来判断。
+1. **总SG值:**整个游戏的SG值，是所有n堆石子各自SG值的**异或和**。  
+   SG(Game) = sg(a_1) ^ sg(a_2) ^ ... ^ sg(a_n)
+2. **单堆SG值:** 一堆数量为x的石子的SG值sg(x)，等于它所有**后继状态**SG值的mex(最小不包含的非负整数)。
+3. **后继状态:** 将一堆数量为x的石子拆分成i和j(其中i+j=x且i,j > 0)，这个新状态的SG值为sg(i) ^ sg(j)。
+4. **递推公式:**  
+   sg(x) = mex({sg(i) ^ sg(j) | i + j = x, i, j > 0})
+```python
+def main():
+
+    N = 1010
+    f = [-1] * N
+    def _sg(x: int) -> int:
+        if f[x] != -1:
+            return f[x]
+        st = set()
+        for i in range(x):
+            for j in range(0, i + 1):
+                st.add(_sg(i) ^ _sg(j))
+        i = 0
+        while True:
+            if i not in st:
+                f[x] = i
+                return f[x]
+            i += 1
+
+    n = int(input())
+    h = list(map(int, input().split()))
+
+    ans = 0
+    for x in h:
+        ans ^= _sg(x)
+
+    if ans != 0:
+        print("Yes")
+    else:
+        print("No")
+
+if __name__ == "__main__":
+    main()
+```
