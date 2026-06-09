@@ -31,6 +31,7 @@ export default defineConfig({
           { text: '数学问题', link: '/algorithm/basic/math_problem.md' },
           { text: '动态规划', link: '/algorithm/basic/dynamic_programming.md' },
           { text: '贪心', link: '/algorithm/basic/greedy_problem.md' },
+          { text: 'hot100', link: '/algorithm/lc_hot_100_part1.md' },
         ]
       }
     ],
