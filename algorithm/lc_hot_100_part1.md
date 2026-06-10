@@ -87,3 +87,135 @@ class Solution:
             return root
         return _dfs(root)
 ```
+
+## lc221. 在由 '0' 和 '1' 组成的二维矩阵中，找到仅包含 '1' 的最大正方形的面积。
+关键解法：动态规划
+1. 状态定义
+   dp[i][j] 表示以 (i, j) 为右下角的最大正方形的边长。
+2. 转移方程
+   ○ 若 matrix[i][j] == '1'：
+   dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1
+   ○ 否则：dp[i][j] = 0
+   解释：正方形需要左、上、左上三个方向同时支持，取最小值保证所有方向均满足条件。
+3. 初始化
+   ○ dp 数组初始化为全 0。
+   ○ 边界处理：当 i == 0 或 j == 0 时，若当前值为 '1'，则 dp[i][j] = 1。
+4. 记录最大值
+   遍历过程中维护 max_side（最大边长），最终返回 max_side。
+
+```python
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        n = len(matrix)
+        m = len(matrix[0])
+        dp = [[0] * (m + 1) for _ in range(n)]
+        max_side = 0
+        for i in range(n):
+            for j in range(m):
+                if matrix[i][j] == '1':
+                    if i == 0 or j == 0:
+                        dp[i][j] = 1
+                    else:
+                        dp[i][j] = min(dp[i][j-1], dp[i-1][j], dp[i-1][j-1]) + 1
+                    max_side = max(max_side, dp[i][j])
+
+
+        return max_side * max_side
+```
+## lc215. 在未排序的数组中找到第 k 个最大的元素。
+● 基于快速排序的分治思想，每次分区后根据pivot位置判断目标在左/右子数组。
+● 优化：随机选择pivot避免最坏情况（O(n²) → 平均O(n)）。
+● 关键步骤：
+a. 随机选pivot，将数组分为 >pivot、=pivot、<pivot 三部分。
+b. 若右半部分长度≥k，则在右半部分继续查找。
+c. 否则在左半部分查找，调整k值。
+方法2：最小堆（Min-Heap）
+
+维护大小为k的最小堆，堆顶即为第k大元素。
+
+```python
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        def _find_k(nums: List[int], l, r, k: int) -> int:
+            if l >= r:
+                return nums[l]
+            mid = nums[(l + r) // 2]
+            i = l - 1
+            j = r + 1
+            while i < j:
+                while True:
+                    i += 1
+                    if nums[i] >= mid:
+                        break
+
+                while True:
+                    j -= 1
+                    if nums[j] <= mid:
+                        break
+                if i < j:
+                    nums[i], nums[j] = nums[j], nums[i]
+
+            if j - l + 1 >= k:
+                return _find_k(nums, l, j, k)
+            else:
+                return _find_k(nums, j + 1, r, k - (j - l + 1))
+
+        n = len(nums)
+        return _find_k(nums, 0, n - 1, n - k + 1)
+```
+
+## lc208. 实现包含以下功能的Trie（前缀树）：
+实现包含以下功能的Trie（前缀树）：
+1. void insert(String word)
+2. boolean search(String word)
+3. boolean startsWith(String prefix)
+
+方法逻辑：
+1. 插入
+   ○ 遍历单词字符，逐层创建缺失的节点
+   ○ 最后一个字符的节点标记isEnd = true
+2. 搜索
+   ○ 遍历单词字符，若中间缺失节点则返回false
+   ○ 检查最后一个节点的isEnd标记
+3. 前缀匹配
+   ○ 仅需遍历前缀字符，中间无缺失节点即返回true
+```python
+class Trie:
+
+    def __init__(self):
+        self.trie = [[0] * 26]
+        self.tot = 0
+        self.end = [False]
+
+    def insert(self, word: str) -> None:
+        p = 0
+        for c in word:
+            ch :int = ord(c) - ord('a')
+            if self.trie[p][ch] == 0:
+                self.trie.append([0] * 26)
+                self.tot += 1
+                self.trie[p][ch] = self.tot
+                self.end.append(False)
+            p = self.trie[p][ch]
+        self.end[p] = True
+        
+
+    def search(self, word: str) -> bool:
+        p = 0
+        for c in word:
+            ch :int = ord(c) - ord('a')
+            p = self.trie[p][ch]
+            if p == 0:
+                return False
+        return self.end[p]
+
+
+    def startsWith(self, prefix: str) -> bool:
+        p = 0
+        for c in prefix:
+            ch :int = ord(c) - ord('a')
+            p = self.trie[p][ch]
+            if p == 0:
+                return False
+        return True
+```
