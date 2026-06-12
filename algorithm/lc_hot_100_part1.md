@@ -219,3 +219,196 @@ class Trie:
                 return False
         return True
 ```
+
+
+## lc207. 给定课程总量 numCourses 和先修课程要求数组 prerequisites，判断是否能完成所有课程（即图中无环）。
+解题思路（拓扑排序）
+关键步骤：
+1. 构建邻接表：记录每个节点的后续课程
+2. 入度数组：统计每个节点的前置条件数量
+3. BFS初始化：将入度为0的节点加入队列
+4. 遍历节点：
+   ○ 取出节点，减少相邻节点的入度
+   ○ 若相邻节点入度变为0，加入队列
+5. 结果判断：已访问节点数 == 总节点数 → 无环
+```python
+import collections
+
+class Solution:
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        graph = [[] for _ in range(numCourses)]
+        deg = [0] * numCourses
+        for a, b in prerequisites:
+            graph[b].append(a)
+            deg[a] += 1
+        deque = collections.deque()
+        for i in range(numCourses):
+            if deg[i] == 0:
+                deque.append(i)
+        cnt = 0
+        while len(deque) > 0:
+            x = deque.popleft()
+            cnt += 1
+            for y in graph[x]:
+                deg[y] -= 1
+                if deg[y] == 0:
+                    deque.append(y)
+        return cnt == numCourses
+
+```
+
+## lc206. 反转一个单链表
+1. ‌迭代法‌：使用三个指针(prev, curr, next)逐个反转节点指向
+2. ‌递归法‌：递归到链表末端，然后逐层反转节点指向
+
+```python
+class Solution:
+    def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        master = ListNode(0)
+        while head:
+            p = head
+            head = head.next
+            p.next = master.next
+            master.next = p
+        return master.next
+```
+
+## lc200. 给定一个由 '1'（陆地）和 '0'（水）组成的二维网格，计算岛屿数量。  岛屿通过水平或垂直连接相邻陆地形成。
+解题思路（DFS/BFS）
+核心逻辑：
+1. 遍历网格：遇到'1'时启动搜索
+2. 标记已访问：将访问过的陆地改为'0'（避免重复计数）
+3. 四方向扩散：递归/队列处理上下左右相邻节点
+
+```python
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        n = len(grid)
+        m = len(grid[0])
+
+        def _dfs(x, y: int, grid: List[List[str]]):
+            if x < 0 or x >= n or y < 0 or y >= m or grid[x][y] == '0':
+                return
+            grid[x][y] = '0'
+            _dfs(x, y + 1, grid)
+            _dfs(x + 1, y, grid)
+            _dfs(x- 1, y, grid)
+            _dfs(x, y - 1, grid)
+
+        ans = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == '1':
+                    _dfs(i, j, grid)
+                    ans += 1
+
+        return ans
+```
+
+## lc198. 给定一个非负整数数组 nums，表示每个房屋存放的金额。不能同时偷相邻两间房屋，求能偷窃的最高金额。
+解题思路（动态规划）
+状态定义：
+● f[i][0]：不偷第i个房屋时的最高金额
+● f[i][1]：偷到第i个房屋时的最高金额
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [[0,0] for _ in range(n + 2)]
+        for i in range(1, n + 1):
+            dp[i][0] = max(dp[i - 1][0], dp[i - 1][1])
+            dp[i][1] = dp[i - 1][0] + nums[i - 1]
+        return max(dp[n][0], dp[n][1])
+```
+
+## lc169. 给定一个大小为 n 的数组，找到其中的多数元素。多数元素指出现次数 大于 ⌊n/2⌋ 的元素（假设数组非空且总存在多数元素）
+解题思路（摩尔投票法）
+核心逻辑：
+1. 候选人+计数器：
+   ○ 遍历数组，若计数器为0，设当前元素为候选人
+   ○ 当前元素等于候选人时计数器+1，否则-1
+2. 数学保证：由于多数元素数量过半，最终候选人必为结果
+
+
+```python
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        now = nums[0]
+        res = 1
+        for i in range(1, len(nums)):
+            if now == nums[i]:
+                res += 1
+            else:
+                res -= 1
+                if res < 0:
+                    res = 1
+                    now = nums[i]
+        return now
+```
+
+lc238. - 给定整数数组 nums，返回数组 answer，使得 answer[i] 等于 nums 中除 nums[i] 外所有元素的乘积。
+
+解题思路（双遍历）
+核心逻辑：
+1. 前缀乘积 → 后缀乘积 → 合并结果
+   ○ 第一次遍历（左→右）：计算每个位置左侧所有元素的乘积
+   ○ 第二次遍历（右→左）：计算右侧乘积，并直接乘到结果数组中
+
+```python
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+        f = [0] * (n + 2)
+        g = [0] * (n + 2)
+        f[0] = 1
+        g[n + 1] = 1
+        for i in range(1,n + 1):
+            f[i] = f[i - 1] * nums[i - 1]
+
+        for i in range(n, 0, -1):
+            g[i] = g[i + 1] * nums[i - 1]
+
+        ans = []
+        for i in range(1, n + 1):
+            ans.append(f[i - 1] * g[i + 1])
+        return ans
+```
+
+
+## lc155. 最小栈 设计一个支持 push、pop、top 操作的栈，并能在 O(1) 时间内检索到最小元素。
+解题思路（双栈法）
+核心设计：
+1. 主栈：存储所有元素
+2. 辅助栈：存储每个状态下的最小值（与主栈同步更新）
+   操作逻辑：
+   ● push(x)：
+   ○ 主栈压入x
+   ○ 辅助栈压入min(x, 辅助栈顶)（若空则直接压入x）
+   ● pop()：同时弹出主栈和辅助栈顶
+   ● getMin()：直接返回辅助栈顶
+
+```python
+class MinStack:
+
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+
+    def push(self, value: int) -> None:
+        self.stack.append(value)
+        if self.min_stack:
+            res = min(value, self.min_stack[-1])
+            self.min_stack.append(res)
+        else:
+            self.min_stack.append(value)
+
+    def pop(self) -> None:
+        self.stack.pop()
+        self.min_stack.pop()
+
+    def top(self) -> int:
+        return self.stack[-1]
+
+    def getMin(self) -> int:
+        return self.min_stack[-1]
+```
