@@ -412,3 +412,137 @@ class MinStack:
     def getMin(self) -> int:
         return self.min_stack[-1]
 ```
+
+## lc152. 给定一个整数数组 nums，找出乘积最大的连续子数组，并返回该乘积。
+
+动态规划解法
+● 需要同时记录当前最大值和最小值（因为负数乘以负数会变成正数）
+● 状态转移方程：
+○ maxDP[i] = max(nums[i], maxDP[i-1]*nums[i], minDP[i-1]*nums[i])
+○ minDP[i] = min(nums[i], maxDP[i-1]*nums[i], minDP[i-1]*nums[i])
+
+```python
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        n = len(nums)
+        minf = [-1] * n
+        maxf = [-1] * n
+        minf[0] = maxf[0] = nums[0]
+        for i in range(1, n):
+            minf[i] = min(nums[i], minf[i-1] * nums[i], maxf[i-1] * nums[i])
+            maxf[i] = max(nums[i], minf[i-1] * nums[i], maxf[i-1] * nums[i])
+
+        return max(maxf)
+```
+
+
+## lc148. 对给定的链表头节点进行升序排序，要求时间复杂度 O(n log n)，空间复杂度 O(1)（递归栈不算入空间复杂度）。
+解题思路（归并排序）
+核心步骤：
+1. 分治法：
+   ○ 快慢指针找到链表中点，拆分成两个子链表
+   ○ 递归排序左右子链表
+2. 合并有序链表：
+   ○ 类似合并两个有序数组，但操作指针
+
+```python
+class Solution:
+    def sortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+
+        def _quicksork(head: Optional[ListNode]) -> Optional[ListNode]:
+            if not head or not head.next:
+                return head
+            slow = head
+            fast = head.next
+
+            while fast and fast.next:
+                fast = fast.next.next
+                slow = slow.next
+
+            mid = slow.next
+            slow.next = None
+            list1 = _quicksork(head)
+            list2 = _quicksork(mid)
+
+            master = ListNode()
+            p = master
+            while list1 and list2:
+                if list1.val < list2.val:
+                    p.next = list1
+                    list1 = list1.next
+                else:
+                    p.next = list2
+                    list2 = list2.next
+                p = p.next
+
+            p.next = list1 if list1 else list2
+            return master.next
+
+        return _quicksork(head)
+```
+
+## lc142. 给定一个链表的头节点 head，返回链表开始入环的第一个节点。如果链表无环，返回 null。
+
+解题思路
+核心逻辑：
+1. 快慢指针：
+   ○ 快指针每次走2步，慢指针每次走1步
+   ○ 若相遇则存在环
+2. 找入口点：
+   ○ 相遇后，快指针重置到链表头
+   ○ 两指针均每次走1步，再次相遇点即为环入口
+   数学推导
+   设：
+   ● 链表头到入口距离为 a
+   ● 入口到相遇点距离为 b
+   ● 环剩余距离为 c
+   当快慢指针首次相遇时：
+
+慢指针路程 = a + b  
+快指针路程 = a + b + n(b + c)  
+由快指针速度是慢指针的2倍得：  
+2(a + b) = a + b + n(b + c) → a = (n-1)(b+c) + c  
+
+```python
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        if not head or not head.next:
+            return None
+        fast = head
+        slow = head
+        while fast and fast.next:
+            fast = fast.next.next
+            slow = slow.next
+            if fast == slow:
+                p = head
+                while p != fast:
+                    p = p.next
+                    fast = fast.next
+                return p
+
+        return None
+```
+
+## lc141. 给定一个链表的头节点 head，判断链表中是否有环。
+
+解题思路（Floyd判圈算法）
+核心逻辑：
+● 快慢指针：
+○ 快指针每次移动2步，慢指针每次移动1步
+○ 若两指针相遇 → 存在环；若快指针走到链表尾部 → 无环
+
+```python
+class Solution:
+    def hasCycle(self, head: Optional[ListNode]) -> bool:
+        if not head or not head.next:
+            return False
+        fast = head
+        slow = head
+        while fast and fast.next:
+            fast = fast.next.next
+            slow = slow.next
+            if slow == fast:
+                return True
+
+        return False
+```
