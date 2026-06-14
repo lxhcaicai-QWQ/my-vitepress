@@ -546,3 +546,356 @@ class Solution:
 
         return False
 ```
+
+##  lc139. 给定一个非空字符串 s 和单词字典 wordDict，判断 s 是否能被分割为字典中的单词。
+
+核心逻辑：
+1. 状态定义：dp[i] 表示前 i 个字符（即 s[0..i-1]）能否被分割
+2. 状态转移：
+   dp[i] = true 当且仅当存在 j < i，使得 dp[j] == true 且 s[j..i-1] ∈ wordDict
+3. 初始条件：dp[0] = true（空字符串默认可分割）
+
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        n = len(s)
+        work_set = set(wordDict)
+        dp = [False] * (n + 1)
+        dp[0] = True
+        for i in range(1, n + 1):
+            for j in range(0, i):
+                if dp[j] and s[j:i] in work_set:
+                    dp[i] = True
+        return dp[n]
+```
+
+
+##  lc136.给定一个非空整数数组，除了某个元素只出现一次外，其余每个元素均出现两次。找出那个只出现一次的元素。  要求：时间复杂度 O(n)，空间复杂度 O(1)
+
+解题思路（位运算）
+核心逻辑：
+使用异或（XOR）运算：
+相同数字异或结果为 0（a ^ a = 0）
+任何数与 0 异或结果为自身（b ^ 0 = b）
+遍历数组：所有元素异或后，出现两次的互相抵消，仅剩单个元素
+
+```python
+class Solution:
+    def singleNumber(self, nums: List[int]) -> int:
+        ans = 0
+        for x in nums:
+            ans ^= x
+        return ans
+```
+
+## lc647. 给定一个字符串 s，统计并返回字符串中回文子串的数量。不同起始或结束位置的子串（即使内容相同）被视为不同的子串。
+
+A: 中心扩展法（最优解）：
+1. 核心思想：
+   遍历每个字符，以单字符（奇数长度）或双字符（偶数长度）为中心，向两侧扩展判断回文。
+2. 关键步骤：
+   ○ 奇数中心：以 (i, i) 为中心，向左右扩展。
+   ○ 偶数中心：以 (i, i+1) 为中心，向左右扩展。
+   ○ 每次成功扩展（左右字符相同），计数 +1。
+3. 复杂度：
+   ○ 时间复杂度：O(n²)（遍历所有中心，每个中心扩展 O(n)）。
+   ○ 空间复杂度：O(1)（无需额外空间）。
+
+```python
+class Solution:
+   def countSubstrings(self, s: str) -> int:
+      n = len(s)
+      ans = 0
+      for center in range(0, n):
+         left = center
+         right = center
+         while left >=0 and right < n and s[left] == s[right]:
+            left -= 1
+            right += 1
+            ans += 1
+
+         left = center
+         right = center + 1
+         while left >=0 and right < n and s[left] == s[right]:
+            left -= 1
+            right += 1
+            ans += 1
+
+      return ans
+```
+
+## lc124. 给定一棵二叉树，找出路径的最大和。
+
+递归遍历 + 贪心策略：
+1. 后序遍历框架：
+   ○ 先处理左子树 → 再处理右子树 → 最后当前节点
+2. 关键变量：
+   ○ 全局最大路径和：记录遍历过程中出现的最大路径
+   ○ 单侧最大贡献值：以当前节点为起点的向下路径最大和
+3. 策略规则：
+   ○ 子树贡献值若为负则舍弃（取0）
+   ○ 更新全局最大值：当前节点值 + 左贡献 + 右贡献
+   ○ 向上返回值：当前节点值 + max(左贡献, 右贡献)
+
+```python
+class Solution:
+    def maxPathSum(self, root: Optional[TreeNode]) -> int:
+        global ans
+        ans = -10**10
+        def _dfs(root: Optional[TreeNode]) -> int:
+            global ans
+            if root == None:
+                return  0
+            left = max(_dfs(root.left), 0)
+            right = max(_dfs(root.right), 0)
+            ans = max(ans, root.val + left + right)
+            return root.val + max(left, right)
+        _dfs(root)
+        return ans
+```
+
+##  lc128给定一个未排序的整数数组 nums，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。要求时间复杂度为 O(n)。
+
+解题思路（哈希集合）
+核心逻辑：
+1. 构建哈希集合：存储所有数字（O(1)查找）
+2. 寻找连续序列起点：
+   ○ 仅当 num-1 不在集合中时，以 num 为起点探索连续序列
+3. 扩展序列：
+   ○ 从起点开始，依次检查 num+1、num+2... 是否在集合中
+   ○ 更新最大长度
+
+```python
+class Solution:
+    def longestConsecutive(self, nums: List[int]) -> int:
+        nums_set = set(nums)
+        ans = 0
+        # 注意从set开始避免重复计算
+        for num in nums_set:
+            if num - 1 not in nums_set:
+                x = num
+                res = 1
+                while x + 1 in nums_set:
+                    x += 1
+                    res += 1
+                ans = max(ans, res)
+
+        return ans
+```
+
+## lc322.给定不同面额的硬币 coins 和一个总金额 amount，计算凑成总金额所需的最少硬币个数。如果无法凑出，返回 -1。硬币数量无限。
+
+01背包
+1. DP数组含义：
+   dp[i] = 凑齐i金额的最小硬币数
+2. 初始化铁律：
+   ○ dp[0]=0（基准条件）
+   ○ 其他初始为无穷大（inf）
+3. 双重循环顺序：
+   ○ 外循环：金额 i 从 1 到 amount
+   ○ 内循环：遍历硬币面值 coin
+4. 状态转移核心：
+   dp[i] = min(自身, dp[i-coin]+1)
+
+```python
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        INF = 10 ** 10
+        dp = [INF] * (amount + 1)
+        dp[0] = 0
+        for coin in coins:
+            for j in range(coin, amount + 1):
+                dp[j] = min(dp[j], dp[j - coin] + 1 )
+
+        return -1 if dp[amount] == INF else dp[amount]
+```
+
+## lc494.给定一个整数数组 nums 和目标整数 target，通过在每个整数前添加 '+' 或 '-' 组合表达式，返回运算结果等于 target 的 不同表达式数目
+
+解题思路（动态规划 + 数学转化）
+核心推导：
+设添加 '+' 的数字和为 P，添加 '-' 的数字和为 N：
+
+```text
+P - N = target  
+P + N = sum(nums)  
+→ 2P = sum(nums) + target  
+→ P = (sum(nums) + target) / 2
+```
+关键条件：
+1. (sum + target) 必须为 偶数且非负，否则无解（返回0）
+2. 问题转化为 求子集和为P的方案数（0-1背包问题）
+
+```python
+class Solution:
+    def findTargetSumWays(self, nums: List[int], target: int) -> int:
+        diff = sum(nums) + target
+        if diff < 0 or diff % 2!=0:
+            return 0
+
+        neg = diff // 2
+        dp = [0] * (neg + 1)
+        dp[0] = 1
+        for num in nums:
+            for i in range(neg, num - 1, -1):
+                dp[i] += dp[i - num]
+
+        return dp[neg]
+```
+
+## lc448. 给定一个长度为 n 的整数数组 nums，其中所有元素的值都在 [1, n] 范围内。有些元素出现两次，其他出现一次。找出 [1, n] 中没有出现在数组中的所有数字。
+
+核心思路：原地标记法
+1. 标记出现过的数字：
+   ○ 遍历数组，对每个元素 nums[i]：
+   ■ 取绝对值 x = nums[i]。
+   ■ 定位到索引 pos = x - 1。
+   ■ 如果 nums[pos] <= n，将其加上n（标记为出现）。
+2. 检查缺失的数字：
+   ○ 再次遍历数组：
+   ■ 若 nums[i] <= n，说明 i + 1 未出现。
+   ■ 将这些数字加入结果列表。
+
+```python
+class Solution:
+    def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+        for item in nums:
+            x = (item - 1) % n
+            nums[x] += n
+
+        ans = []
+        for i in range(n):
+            if nums[i] <= n:
+                ans.append(i + 1)
+        
+        return ans
+```
+
+## lc438.给定两个字符串 s 和 p，找到 s 中所有是 p 的 异位词 的子串，返回这些子串的起始索引。不考虑答案输出的顺序。异位词 指由相同字母重排列形成的字符串（包括相同的字符串）。
+
+核心方法：滑动窗口 + 固定长度频次匹配
+关键思路
+1. 固定窗口大小：异位词长度与 p 相同，窗口长度固定为 len(p)。
+2. 频次数组：用长度 26 的数组统计 p 中字母频次（p_count），并动态维护窗口的频次（s_count）。
+3. 滑动更新：窗口每次向右滑动 1 位，更新频次数组并比较是否匹配。
+
+```python
+from collections import Counter
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        p_counter = Counter(p)
+        s_counter = Counter(s[:len(p)])
+        ans = []
+        if s_counter == p_counter:
+            ans.append(0)
+
+        for i in range(0, len(s) - len(p)):
+            s_counter[s[i]] -= 1
+            s_counter[s[i + len(p)]] += 1
+            if s_counter == p_counter:
+                ans.append(i + 1)
+        return ans
+```
+
+## lc437. 给定二叉树的根节点 root 和目标整数 targetSum，求路径和等于 targetSum 的路径数目。路径必须向下（父→子），不需从根开始，也不需在叶节点结束。
+
+核心思路：前缀和 + 回溯
+1. 前缀和：记录从根节点到当前节点的路径和 curr_sum。
+2. 哈希表：存储路径上各前缀和出现的次数（prefix_sum_count）。
+3. 核心公式：curr_sum−targetSum=历史前缀和若历史前缀和存在，说明两节点间路径和 = targetSum。
+4. 回溯：返回上一层前需将当前 curr_sum 从哈希表中移除。
+
+```python
+class Solution:
+    def pathSum(self, root: Optional[TreeNode], targetSum: int) -> int:
+        pre_sum = {}
+        pre_sum[0] = 1
+        def _dfs(root: Optional[TreeNode], sum, target: int) -> int:
+            if root == None:
+                return 0
+            sum += root.val
+
+            res = pre_sum.get(sum - target, 0)
+            pre_sum[sum] = pre_sum.get(sum, 0) + 1
+            res += _dfs(root.left, sum, target)
+            res += _dfs(root.right, sum, target)
+            pre_sum[sum] = pre_sum.get(sum, 0) - 1
+
+            return res
+
+        return _dfs(root, 0, targetSum)
+```
+
+## lc416. 给定一个仅包含正整数的非空数组，判断是否能将数组分割成两个子集，使得两个子集的元素和相等。
+
+核心思路
+1. 问题转化：求是否存在子集和为 sum(nums)/2（若总和为奇数直接返回 false）
+2. 0-1背包解法：
+   ○ 状态定义：dp[j] 表示是否能用数组中的数凑出和 j
+   ○ 初始化：dp[0] = true（空子集和为0）
+   ○ 状态转移：对每个数 num，倒序遍历 j ∈ [target, num]：
+   dp[j] = dp[j] || dp[j - num]
+3. 优化：使用一维DP数组 + 倒序更新
+
+
+```python
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        sums = sum(nums)
+        if sums % 2 != 0:
+            return False
+
+        target = sums // 2
+        dp = [False] * (target + 1)
+        dp[0] = True
+        for num in nums:
+            for i in range(target, num - 1, -1):
+                dp[i] = dp[i - num] or dp[i]
+
+        return dp[target]
+```
+
+## lc461. 计算两个整数之间的汉明距离。两个整数的汉明距离是指它们的二进制表示中不同位的数量。
+
+核心思路
+1. 异或操作：
+   x ^ y 的结果中，每个 1 表示对应位不同。
+2. 统计 1 的数量：
+   利用位运算技巧快速计数（布赖恩·克尼根算法）。
+```python
+class Solution:
+    def hammingDistance(self, x: int, y: int) -> int:
+        res = x ^ y
+        ans = 0
+        while res != 0:
+            res -= res&-res
+            ans += 1
+        return ans
+```
+
+##  lc406. 给定一组人，每个人用一对整数 (h, k) 表示，其中 h 是人的身高，k 是排在这个人前面且身高大于或等于 h 的人数。编写算法重建队列。
+
+核心思想：
+1. 排序预处理：
+   ○ 主排序：按身高 h_i 降序（从高到矮）。
+   ○ 次排序：身高相同则按 k_i 升序（前面人越少越靠前）。
+   目的：确保先处理高个子，再插入矮个子不影响高个子的 k_i。
+2. 贪心插入：
+   ○ 将排序后的人依次插入到结果列表的 k_i 索引位置。
+   解释：高个子先站定位置，矮个子插入时只需根据 k_i 插入到合适空位。
+
+```python
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        
+        # 排序：身高降序，身高相同时 k 值升序
+        people.sort(key = lambda p:(-p[0], p[1]))
+
+        # 使用列表进行高效插入（list.insert 等价于 Java 的 result.add(index, item)）
+        ans = []
+        for p in people:
+            ans.insert(p[1], p)
+
+        return ans
+```
