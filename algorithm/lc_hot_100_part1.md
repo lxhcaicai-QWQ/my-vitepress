@@ -1444,3 +1444,305 @@ class Solution:
 
         return [x,y]
 ```
+
+## lc543. 给定一棵二叉树，计算其直径长度。二叉树的直径是任意两个结点之间的最长路径长度，这条路径可以不经过根结点。路径长度由结点之间的边数表示。
+解题思路
+1. 递归计算深度：
+   ○ 深度 = 从当前结点到叶子结点的最长路径的结点数（包含当前结点）
+   ○ 叶子结点深度 = 1（递归终止条件：空结点返回0）
+2. 更新直径：
+   ○ 每经过一个结点，计算：
+   当前直径 = 左子树深度 + 右子树深度
+   ○ 全局维护最大直径：max_diameter = max(max_diameter, 当前直径)
+3. 返回值：
+   ○ 递归函数返回当前子树深度 = max(左深度, 右深度) + 1
+
+```python
+class Solution:
+    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        global ans
+        ans = 0
+        def _dfs(root: Optional[TreeNode]) -> int:
+            global ans
+            if not root:
+                return 0
+            left = _dfs(root.left)
+            right = _dfs(root.right)
+            ans = max(ans, left + right)
+
+            return max(left, right) + 1
+
+        _dfs(root)
+        return ans
+```
+
+## lc32. 给定一个只包含 '(' 和 ')' 的字符串，找出最长有效括号子串的长度。有效：格式正确且连续的括号序列。
+
+核心思路：动态规划
+
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        n = len(s)
+        f = [0] * (n + 1)
+        stack = []
+        for i in range(1, n + 1):
+            if s[i-1] == '(':
+                stack.append(i)
+            else:
+                if stack:
+                    x = stack.pop()
+                    f[i] = i - x + 1 + f[x - 1]
+                else:
+                    f[i] = 0
+
+        return max(f)
+```
+
+
+## lc33. 在一个旋转后的有序数组中搜索目标值，返回其索引。若不存在则返回-1。时间复杂度要求O(log n)。
+
+核心思路
+● 核心思想：修改二分查找，判断左右区间哪个有序，再决定搜索方向
+● 关键点：
+✅ 通过 nums[left] <= nums[mid] 判断左区间是否有序
+✅ 在有序区间内检查 target 是否在该区间内
+✅ 不在有序区间则必在另一侧
+
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+        l = 0
+        r = len(nums) - 1
+        while l <= r:
+            mid = (l + r) // 2
+            if nums[l] <= nums[mid]:
+                if nums[l] <= target and target <= nums[mid]:
+                    r = mid - 1
+                else:
+                    l = mid + 1
+            else:
+                if nums[mid] <= target and target <= nums[r]:
+                    l = mid + 1
+                else:
+                    r = mid - 1
+
+            if nums[mid] == target:
+                return mid
+
+        return -1
+```
+
+## lc31. 实现获取 下一个排列 的函数，需将数字序列重新排列成字典序中下一个更大的排列。若不存在更大的排列，则重新排列为最小字典序（升序）。必须原地修改，只使用额外常数空间。
+
+核心思路
+1. 字典序规则：
+   ○ 排列的顺序按字典序排列，如 [1,2,3] < [1,3,2]。
+2. 关键观察：
+   ○ 下一个排列需在尽可能靠右的位置增大数值，然后使右侧部分升序（最小化）。
+3. 算法步骤：
+   ○ 步骤1：从右向左找第一个降序对 nums[i] < nums[i+1]（位置 i）。
+   ○ 步骤2：从右向左找第一个大于 nums[i] 的数 nums[j]。
+   ○ 步骤3：交换 nums[i] 和 nums[j]。
+   ○ 步骤4：将 i+1 到末尾的部分翻转，使其升序。
+   ○ 特例：若步骤1找不到降序对，说明整个序列是最大排列，直接翻转成最小排列。
+
+```python
+class Solution:
+    def nextPermutation(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        n = len(nums)
+        is_ok = False
+        for i in range(n - 1, 0, -1):
+            if nums[i] > nums[i-1]:
+                for j in range(n - 1, i - 1, -1):
+                    if nums[j] > nums[i - 1]:
+                        nums[j], nums[i-1] = nums[i-1], nums[j]
+                        nums[i:] = sorted(nums[i:])
+                        is_ok = True
+                        break
+            if is_ok:
+                break
+        if not is_ok:
+            nums.sort()
+```
+
+## lc23. 将 k 个升序链表合并为一个新的升序链表并返回。
+使用分治法（Divide and Conquer）：将k个链表分成两半，然后继续分，直到只有两个链表，然后合并两个链表。
+
+```python
+class Solution:
+    def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
+
+        if not lists:
+            return None
+        def _mergesort(lists: List[Optional[ListNode]], l, r: int) -> Optional[ListNode]:
+            if l >= r:
+                return lists[l]
+            mid = (l + r) // 2
+            list1 = _mergesort(lists, l, mid)
+            list2 = _mergesort(lists, mid + 1, r)
+
+            master = ListNode()
+            p = master
+            while list1 and list2:
+                if list1.val < list2.val:
+                    p.next = list1
+                    list1 = list1.next
+                else:
+                    p.next = list2
+                    list2 = list2.next
+                p = p.next
+
+            p.next = list1 if list1 else list2
+            return master.next
+
+        return _mergesort(lists, 0, len(lists) - 1)
+```
+
+## lc538. 给定一个二叉搜索树（BST），将其转换为累加树（Greater Tree），使得每个节点的值等于原始值加上所有大于它的节点值之和。
+
+核心思路
+1. 逆中序遍历（右 → 根 → 左）：
+   二叉搜索树的中序遍历是升序（左→根→右）。而逆中序遍历（右→根→左）可得到降序序列，使节点值从大到小排列。
+2. 累加和传递：
+   维护一个全局累加和 sum。遍历时，对每个节点执行：
+   ○ 将 sum 累加到当前节点值：node.val += sum
+   ○ 更新 sum 为当前节点的新值（即 sum = node.val）
+
+```python
+class Solution:
+    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        sums = 0
+        def _bst(root: Optional[TreeNode]) -> Optional[TreeNode]:
+            nonlocal sums
+            if not root:
+                return None
+            _bst(root.right)
+            sums += root.val
+            root.val = sums
+            _bst(root.left)
+            return root
+
+        return _bst(root)
+```
+
+## lc20. 给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串 s，判断字符串是否有效。
+
+有效条件：
+1. 左括号必须用相同类型的右括号闭合。
+2. 左括号必须以正确顺序闭合。
+3. 每个右括号必须有对应相同类型的左括号。
+   A: 核心思路
+   使用栈（Stack） 处理括号匹配：
+4. 遍历字符：
+   ○ 遇 左括号：压入栈中（等待匹配）。
+   ○ 遇 右括号：检查栈顶是否匹配的左括号（不匹配或栈空则无效）。
+5. 最终检查：栈必须为空（无未闭合括号）。
+
+```python
+class Solution:
+    def isValid(self, s: str) -> bool:
+        if len(s) % 2 != 0:
+            return False
+        stack = []
+        for char in s:
+            if char == '(':
+                stack.append(')')
+            elif char == '[':
+                stack.append(']')
+            elif char == '{':
+                stack.append('}')
+            elif not stack or stack.pop() != char:
+                return False
+
+        return not stack
+```
+
+##  lc560. 给定一个整数数组 nums 和一个整数 k，统计数组中和等于 k 的连续子数组的个数。
+示例：
+输入：nums = [1,1,1], k = 2 → 输出：2（子数组 [1,1] 和 [1,1]）
+
+前缀和 + 哈希表优化
+1. 前缀和定义：
+   prefix_sum 表示从数组开头到当前元素的累加和（例如遍历到 nums[i] 时，prefix_sum = nums[0]+...+nums[i]）。
+2. 数学关系：
+   子数组 [j, i] 的和 = prefix_sum[i] - prefix_sum[j-1] = k
+   → 需满足：prefix_sum[j-1] = prefix_sum[i] - k
+3. 哈希表作用：
+   存储所有前缀和的出现次数，实现 O(1) 快速查找需要的值。
+
+```python
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        n = len(nums)
+        sums = [x for x in nums]
+        for i in range(1, n):
+            sums[i] += sums[i -1]
+
+        ans = 0
+        sum_map = {0:1}
+        for i in range(n):
+            ans += sum_map.get(sums[i] - k, 0)
+            sum_map[sums[i]] = sum_map.get(sums[i],0) + 1
+
+        return ans
+```
+
+## lc19. 给定一个链表，删除其倒数第 n 个节点，返回链表头节点。
+
+解决思路：
+1. 创建哑节点（dummy） 指向头节点，避免处理头节点删除
+2. 快指针先走 n+1 步
+3. 慢指针从哑节点开始，与快指针同步移动直到快指针到末尾
+4. 此时慢指针指向待删除节点的前驱，修改指针完成删除
+
+```python
+class Solution:
+    def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
+        dumpy = ListNode(0, head)
+        fast = dumpy
+        slow = dumpy
+        for i in range(n + 1):
+            fast = fast.next
+
+        while fast:
+            fast = fast.next
+            slow = slow.next
+
+        slow.next = slow.next.next
+        return dumpy.next
+```
+
+## lc21. 将两个升序链表合并为一个新的升序链表并返回。新链表通过拼接给定链表的节点组成。
+
+关键思想
+使用虚拟头节点（dummy node）避免边界判断，通过指针逐步合并。
+算法步骤：
+1. 创建虚拟头节点 dummy 和移动指针 cur
+2. 遍历两链表：
+   ○ 比较当前节点值，将较小节点接到 cur.next
+   ○ 移动较小节点所在链表的指针
+   ○ 移动 cur 指针
+3. 将剩余非空链表直接拼接
+4. 返回 dummy.next
+
+```python
+class Solution:
+    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+        master = ListNode(0)
+        p = master
+        while list1 and list2:
+            if list1.val < list2.val:
+                p.next = list1
+                list1 = list1.next
+            else:
+                p.next = list2
+                list2 = list2.next
+            p = p.next
+
+        p.next = list1 if list1 else list2
+        return master.next
+```
