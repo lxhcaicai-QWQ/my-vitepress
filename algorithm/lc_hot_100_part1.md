@@ -899,3 +899,548 @@ class Solution:
 
         return ans
 ```
+
+
+## lc394. 给定一个编码字符串，格式为 k[encoded_string]，表示方括号内的 encoded_string 重复 k 次（k 为正整数）。字符串中可能包含多层嵌套括号，需将其解码为原始字符串。
+
+示例：
+● 输入：s = "3[a]2[bc]" → 输出："aaabcbc"
+● 输入：s = "3[a2[c]]" → 输出："accaccacc"
+
+核心方法：双栈法
+1. 数据结构：
+   ○ 数字栈 num_stack：存储重复次数 k。
+   ○ 字符串栈 str_stack：存储括号前的字符串片段。
+   ○ 当前字符串 current_str：动态记录正在解析的字符串。
+   ○ 当前数字 current_num：动态记录当前数字（多位数字需拼接）。
+
+```python
+class Solution:
+    def decodeString(self, s: str) -> str:
+        string_stack = []
+        num_stack = []
+        current_string = ""
+        current_num = 0
+        for c in s:
+            if c.isdigit():
+                current_num = current_num * 10 + int(c)
+            elif c == '[':
+                num_stack.append(current_num)
+                string_stack.append(current_string)
+                current_string = ""
+                current_num = 0
+            elif c == ']':
+                num = num_stack.pop()
+                pre_string = string_stack.pop()
+                current_string = pre_string + current_string * num
+            else:
+                current_string += c
+
+        return current_string
+```
+
+## lc121. 给定一个数组 prices，其中 prices[i] 表示股票第 i 天的价格。你只能选择 某一天买入 并 在未来的某一天卖出，求能获得的 最大利润。若无法获利，返回 0。
+
+核心思路
+1. 动态更新最低价：遍历过程中记录截至当前的最低价格 min_price。
+2. 计算最大利润：对每个价格 p，用 p - min_price 更新最大利润 max_profit。
+   关键点
+   ● 时间复杂度 O(n)：仅需一次遍历。
+   ● 空间复杂度 O(1)：只使用两个变量。
+   ● 边界处理：空数组直接返回 0。
+
+```python
+class Solution:
+   def maxProfit(self, prices: List[int]) -> int:
+      ans = 0
+      n = len(prices)
+      f = [0] * n
+      f[0] = prices[0]
+      for i in range(1, n):
+         f[i] = min(f[i-1], prices[i])
+         ans = max(ans, prices[i] - f[i])
+      return ans
+```
+
+##  lc337. 小偷发现一个地区房屋布局为二叉树结构（根节点为入口），相邻房屋（直接相连节点）被打劫会触发警报。给定二叉树根节点 root，求不触发警报时的最大盗取金额。
+关键思路
+● 树形动态规划：每个节点返回两个状态值（偷/不偷时的最大值）
+● 状态定义：
+○ rob: 偷当前节点时的最大金额
+○ skip: 不偷当前节点时的最大金额
+● 状态转移：
+○ 偷当前节点 → 跳过直接子节点
+rob = node.val + left_skip + right_skip
+○ 不偷当前节点 → 子节点可偷/不偷
+skip = max(left_rob, left_skip) + max(right_rob, right_skip)
+
+```python
+class Solution:
+    def rob(self, root: Optional[TreeNode]) -> int:
+        f = {}
+        g = {}
+        def _dfs(root: Optional[TreeNode]):
+            if root == None:
+                return
+            _dfs(root.left)
+            _dfs(root.right)
+            f[root] = root.val + g.get(root.left, 0) + g.get(root.right, 0)
+            g[root] = max(g.get(root.left, 0), f.get(root.left, 0)) + max(g.get(root.right, 0), f.get(root.right, 0))
+        _dfs(root)
+        return max(g.get(root,0), f.get(root,0))
+```
+
+##  lc338. 给定一个非负整数 n，要求计算 0 到 n 之间每个数字的二进制表示中 1 的个数，并返回结果数组。
+
+核心解法：动态规划 + 位运算
+1. 奇偶规律：
+   ○ 偶数 i：二进制中 1 的个数等于 i/2 的个数（右移一位后结果相同）。
+   例：6（二进制 110）的 1 的个数 = 3（二进制 11）的个数。
+   ○ 奇数 i：二进制中 1 的个数等于 i-1 的个数加 1（末尾 0 变 1）。
+   例：7（二进制 111）的个数 = 6 的个数 2 + 1 → 3。
+
+```python
+class Solution:
+    def countBits(self, n: int) -> List[int]:
+        f = [0] * (n + 1)
+        f[0] = 0
+        for i in range(1, n + 1):
+            j = i - (i&-i)
+            f[i] = f[j] + 1
+        return f
+```
+
+## lc312. 有 n 个气球，索引从 0 到 n-1，每个气球标有数字 nums[i]。戳破气球 i 可获得 nums[left] × nums[i] × nums[right] 硬币，其中 left 和 right 是 i 的相邻气球（戳破后相邻关系动态变化）。求戳破所有气球能获得的最大硬币数。
+
+
+关键思路与算法
+区间 DP（动态规划）
+1. 修改数组：首尾添加 1（虚拟气球），新数组为 arr = [1] + nums + [1]，长度 n+2。
+2. DP 定义：
+   ○ dp[i][j]：戳破 开区间 (i, j) 内所有气球 的最大硬币数（i 和 j 不戳破）。
+   ○ 最终目标：dp[0][n+1]（戳破整个 [1, 2, ..., n] 区间）。
+
+```python
+class Solution:
+    def maxCoins(self, nums: List[int]) -> int:
+        nums = [1] + nums + [1]
+        n = len(nums)
+        dp = [[0] * n for _ in range(n)]
+        for length in range(2, n + 1):
+            for i in range(0, n - length + 1):
+                j = i + length - 1
+                for k in range(i + 1, j):
+                    dp[i][j] = max(dp[i][j], dp[i][k] + dp[k][j] + nums[i] * nums[k] * nums[j])
+
+        return dp[0][n - 1]
+```
+
+
+##  lc347. 给定整数数组 nums 和整数 k，返回出现频率前 k 高的元素。
+核心思路
+1. 统计频率：用哈希表记录每个数字出现的次数。
+2. 维护Top K堆：
+   ○ 使用最小堆（频率越小越先出堆），保持堆大小不超过 k。
+   ○ 遍历哈希表，将元素按 (频率, 元素) 加入堆，堆满时弹出最小频率元素。
+3. 提取结果：倒序输出堆中所有元素（堆中频率从小到大，需反转）。
+
+```python
+import heapq
+from collections import Counter
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        count = Counter(nums)
+        heap = []
+        for num, freq in count.items():
+            heapq.heappush(heap, (freq, num))
+            if len(heap) > k:
+                heapq.heappop(heap)
+
+        return [num for _, num in heap]
+```
+
+## lc300. 给定一个整数数组 nums，返回最长严格递增子序列（不连续）的长度。
+
+动态规划解法（O(n²)）
+● 定义状态：dp[i] 表示以 nums[i] 结尾的最长递增子序列长度。
+贪心 + 二分查找解法（O(n log n)） ✅
+● 维护数组 tails：
+tails[k] 表示长度为 k+1 的递增子序列的最小末尾元素。
+● 遍历数组：
+○ 若当前元素 num > tails[-1]：扩展序列（tails.append(num)）。
+○ 否则：二分查找 tails 中第一个 ≥num 的位置并替换。
+● 结果：tails 的长度即为最长递增子序列长度。
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        f = []
+        for num in nums:
+            if not f or f[-1] < num:
+                f.append(num)
+            else:
+                l = 0
+                r = len(f) - 1
+                pos = 0
+                while l <= r:
+                    mid = (l + r) // 2
+                    if f[mid] >= num:
+                        r = mid - 1
+                        pos = mid
+                    else:
+                        l = mid + 1
+                f[pos] = num
+        return len(f)
+```
+
+## lc309. 给定整数数组 prices，其中 prices[i] 表示第 i 天的股票价格。设计算法计算最大利润，约束如下：
+1. 可多次交易，但再次买入前必须卖出之前的股票（不能同时参与多笔交易）。
+2. 卖出股票后，无法在第二天买入股票（冷冻期为 1 天）。
+
+核心思路：状态机 DP
+   使用 三个状态 表示每天结束后的情况：
+   ● sell（状态 0）：当天卖出股票（下一天是冷冻期）。
+   ● hold（状态 1）：持有股票（可能是当天买入或之前持有）。
+   ● cool（状态 2）：不持有股票，且当天未卖出（非冷冻期，可买入）。
+
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        n = len(prices)
+        f = [[0,0,0] for _ in range(n + 1)]
+        f[0][1] = -10 ** 10
+        for i in range(1, n + 1):
+            w = prices[i - 1]
+            f[i][0] = f[i-1][1] + w
+            f[i][1] = max(f[i-1][2] - w, f[i-1][1])
+            f[i][2] = max(f[i-1][2], f[i-1][0])
+
+        return max(f[n][0], f[n][2])
+```
+
+##  lc240. 在一个 m x n 的矩阵中查找目标值 target。矩阵具有以下特性：
+● 每行的元素从左到右升序排列
+● 每列的元素从上到下升序排列
+
+● 核心思路
+从右上角（或左下角）开始搜索：
+● 右上角元素是当前行最大和当前列最小
+● 比较 matrix[i][j] 与 target：
+○ 等于 → 直接返回 true
+○ 大于 → 目标值可能在左侧列，列索引 j--
+○ 小于 → 目标值可能在下方的行，行索引 i++
+● 时间复杂度：O(m+n)（最多遍历一行+一列）
+● 空间复杂度：O(1)
+
+```python
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        n = len(matrix)
+        m = len(matrix[0])
+
+        x = 0
+        y = m - 1
+        while x < n and y >= 0:
+            if matrix[x][y] == target:
+                return True
+            elif matrix[x][y] > target:
+                y -= 1
+            else:
+                x += 1
+
+        return False
+```
+
+## lc279. 给定正整数 n，找到若干个完全平方数（如 1、4、9、16...）使它们的和等于 n。返回所需完全平方数的最小数量。
+将问题转化为完全背包问题：
+● 物品：所有不超过 n 的完全平方数（1, 4, 9, ..., (√n)^2）
+● 背包容量：目标整数 n
+● 目标：恰好装满背包所需的最小物品数量（每个物品可重复使用）
+
+```python
+class Solution:
+    def numSquares(self, n: int) -> int:
+        f = [100] * (n + 1)
+        f[0] = 0
+        x = 1
+        while x * x <= n:
+            w = x * x
+            for j in range(w, n + 1):
+                f[j] = min(f[j], f[j - w] + 1)
+            x += 1
+        return f[n]
+```
+
+## lc239. 滑动窗口最大值
+
+核心数据结构：双端队列 (Deque)
+● 存储数组元素的下标（非值本身）
+● 维护队列单调递减：队头是当前窗口最大值的下标
+核心原理：
+● 队头始终是窗口内的最大值下标
+● 队列的单调性确保后续元素不影响当前最大值判断
+● 时间复杂：O(n)（每个元素入队、出队各一次）
+
+```python
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        deque = collections.deque()
+        ans = []
+        for i in range(len(nums)):
+            while deque and i - deque[0] >= k:
+                deque.popleft()
+
+            while deque and nums[i] >= nums[deque[-1]]:
+                deque.pop()
+
+            deque.append(i)
+            if i >= k - 1:
+                ans.append(nums[deque[0]])
+        return ans
+```
+
+## lc283. 给定一个数组 nums，将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序。
+要求：
+1. 原地操作（不能复制数组）
+2. 最小化操作次数
+   示例：
+   输入: [0,1,0,3,12]
+   输出: [1,3,12,0,0]
+
+双指针
+   ● 指针分工：
+   ○ 慢指针 slow：标记下一个非零元素应放置的位置。
+   ○ 快指针 fast：遍历数组，寻找非零元素。
+   ● 操作逻辑：
+   a. 当 fast 遇到非零元素时，将其与 slow 位置的元素交换。
+   b. 交换后 slow 向右移动一位（确保左侧全是非零元素）。
+   c. 无论是否交换，fast 每次向右移动一位。
+   ● 结果：所有 0 被“推”到数组末尾，非零元素顺序不变。
+
+```python
+class Solution:
+    def moveZeroes(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        slow = 0
+        for fast in range(0, len(nums)):
+            if nums[fast] != 0:
+                nums[fast], nums[slow] = nums[slow], nums[fast]
+                slow += 1
+```
+
+
+## lc287. 给定一个包含 n + 1 个整数的数组 nums，其数字都在 [1, n] 范围内。假设只有一个重复的整数（但可能重复多次），找出这个重复数。
+
+1. 数值范围二分：不是对数组索引二分，而是对数值范围 [1, n] 二分。
+2. 鸽笼原理：统计数组中 ≤ mid 的元素个数：
+   ○ 若个数 > mid → 重复数在 [left, mid] 中。
+   ○ 否则 → 重复数在 [mid+1, right] 中。
+3. 终止条件：当 left == right 时，找到重复数。
+
+```python
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        n = len(nums)
+        l,r = 1, n
+        ans = -1
+        while l <= r:
+            mid = (l + r) // 2
+            count = sum(1 for x in nums if x <= mid)
+            if count > mid:
+                ans = mid
+                r = mid - 1
+            else:
+                l = mid + 1
+        return ans
+```
+
+## lc22. 题目描述：数字 n 代表生成括号的对数，设计一个函数，生成所有可能的且有效的括号组合。
+
+示例
+n = 3 → ["((()))","(()())","(())()","()(())","()()()"]
+n = 1 → ["()"]
+
+1. 终止条件：当前字符串长度 = 2 × n
+2. 限制条件：
+   ○ 左括号数量 < n → 添加左括号 (
+   ○ 右括号数量 < 左括号数量 → 添加右括号 )
+
+```python
+class Solution:
+    def generateParenthesis(self, n: int) -> List[str]:
+        ans = []
+        def _dfs(x, y: int, ss: str, n: int):
+            if x == n and y == n:
+                ans.append(ss)
+                return
+            if x == y and x <= n and y <= n:
+                _dfs(x + 1, y, ss + '(', n)
+            elif x > y and x <= n and y <= n:
+                _dfs(x + 1, y, ss + '(', n)
+                _dfs(x, y + 1, ss + ')', n)
+
+        _dfs(0, 0, "", n)
+        return ans
+```
+
+## lc48. 给定一个 n × n 的二维矩阵 matrix，表示一个图像。要求原地将图像顺时针旋转 90 度（不创建额外矩阵）。
+两步操作（数学性质）
+1. 转置矩阵：交换行和列（matrix[i][j] ↔ matrix[j][i]）。
+2. 水平翻转每一行：将每行元素对称交换（matrix[i][j] ↔ matrix[i][n-1-j]）。
+
+
+无论怎么转，第一步永远是“转置”，第二步永远是“翻转”。
+
+顺时针旋转 90° = 转置 + 水平翻转（向左转头，身体跟着向左右翻）
+逆时针旋转 90° = 转置 + 垂直翻转（向左转头，身体跟着向上下翻）
+(注：如果你先做翻转，再做转置，那么对应的翻转方向刚好反过来，即 顺时针 = 垂直翻转 + 转置；逆时针 = 水平翻转 + 转置)
+
+```python
+class Solution:
+    def rotate(self, matrix: List[List[int]]) -> None:
+        """
+        Do not return anything, modify matrix in-place instead.
+        """
+        n = len(matrix)
+        for i in range(n):
+            for j in range(i + 1):
+                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+
+        for i in range(n):
+            matrix[i].reverse()
+```
+
+## lc46. 给定一个不含重复数字的数组 nums，返回其所有可能的全排列。
+
+回溯法（DFS）
+关键思想：
+通过递归遍历所有可能的路径，使用交换实现排列生成（无需额外存储空间）。
+
+```python
+class Solution:
+    def permute(self, nums: List[int]) -> List[List[int]]:
+        n = len(nums)
+        ans = []
+        now = []
+        vis = [False] * (n + 1)
+
+        def _dfs(d: int, now: list[int]):
+            if d == n:
+                res = [x for x in now]
+                ans.append(res)
+                return
+            for i in range(n):
+                if vis[i]:
+                    continue
+                vis[i] = True
+                now.append(nums[i])
+                _dfs(d + 1, now)
+                now.pop()
+                vis[i] = False
+
+        _dfs(0, now)
+        return ans
+```
+
+## lc39. 给定一个无重复元素的整数数组 candidates 和一个目标整数 target，找出所有能组成 target 的唯一组合（每个数字可无限次使用），组合不能重复（例如 [2,2,3] 和 [2,3,2] 视为相同）。
+
+核心思路
+1. 回溯法（DFS）：
+   ○ 关键操作：递归遍历所有可能的组合，通过回溯撤销无效选择。
+   ○ 避免重复：通过固定遍历起点（start 索引），确保组合中的数字非递减排列（如 [2,2,3] 有效，[2,3,2] 因乱序被跳过）。
+2. 剪枝优化：
+   ○ 先对数组排序（candidates.sort()）。
+   ○ 当 remain < candidates[i] 时，提前结束循环（后续数字更大，无需尝试）。
+
+```python
+class Solution:
+    def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
+        ans = []
+        n = len(candidates)
+        def _dfs(now: List[int],last: int, candidates: List[int], sums, target: int):
+            if sums == target:
+                res = [x for x in now]
+                ans.append(res)
+                return
+            for i in range(last, n):
+                if sums + candidates[i] <= target:
+                    now.append(candidates[i])
+                    _dfs(now,i, candidates, sums + candidates[i], target)
+                    now.pop()
+
+        _dfs([],0, candidates, 0, target)
+        return ans
+```
+
+## lc42. 给定 n 个非负整数表示宽度为 1 的柱子高度图，计算下雨后这些柱子之间能接多少雨水。
+
+核心思路
+动态规划解法（最优空间：双指针；逻辑清晰：动态规划）
+1. 每个位置的雨水 = min(左侧最高柱, 右侧最高柱) - 当前高度
+2. 需计算每个位置的左侧最大高度 left_max 和右侧最大高度 right_max。
+3. 总雨水 = 所有位置的雨水高度之和（只取正值）。
+
+```python
+class Solution:
+    def trap(self, height: List[int]) -> int:
+        n = len(height)
+        lmax = [0] * n
+        rmax = [0] * n
+        lmax[0] = height[0]
+        rmax[n-1] = height[n-1]
+
+        for i in range(1, n):
+            lmax[i] = max(lmax[i-1], height[i])
+
+        for i in range(n - 2, -1, -1):
+            rmax[i] = max(rmax[i + 1], height[i])
+
+        ans = 0
+        for i in range(1, n - 1):
+            #遵循木桶效应
+            h = min(lmax[i - 1], rmax[i + 1])
+            if h >= height[i]:
+                ans += h - height[i]
+
+        return ans
+```
+
+##  lc34. 给定一个升序整数数组 nums 和目标值 target，返回 target 在数组中的起始位置和结束位置。如果不存在，返回 [-1, -1]。时间复杂度需为 O(log n)。
+
+核心思路
+两次二分查找：
+1. 查找起始位置：第一个等于 target 的位置
+2. 查找结束位置：最后一个等于 target 的位置
+
+```python
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        x = -1
+        y = - 1
+
+        l, r = 0, len(nums) - 1
+        while l <= r :
+            mid = (l + r) // 2
+            if nums[mid] >= target:
+                x = mid
+                r = mid - 1
+            else:
+                l = mid + 1
+        if x != -1 and nums[x] != target:
+            x = -1
+
+        l, r = 0, len(nums) - 1
+        while l <= r :
+            mid = (l + r) // 2
+            if nums[mid] <= target:
+                y = mid
+                l = mid + 1
+            else:
+                r = mid - 1
+        if y != -1 and nums[y] != target:
+            y = -1
+
+        return [x,y]
+```
