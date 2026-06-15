@@ -1746,3 +1746,360 @@ class Solution:
         p.next = list1 if list1 else list2
         return master.next
 ```
+
+## lc17. 给定一个包含数字 2-9 的字符串 digits，返回所有可能的字母组合（按任意顺序）。数字到字母的映射关系如下（如电话按键）：
+```txt
+2: "abc", 3: "def", 4: "ghi", 5: "jkl",  
+6: "mno", 7: "pqrs", 8: "tuv", 9: "wxyz"
+```
+
+核心思路
+1. 回溯法（DFS）
+   ○ 递归遍历每个数字对应的所有字母，组合生成字符串。
+   ○ 递归树：根节点为空字符串，每层添加一个新字母分支。
+   ○ 终止条件：当前路径长度等于 digits 的长度时，保存组合。
+
+```python
+class Solution:
+    def letterCombinations(self, digits: str) -> List[str]:
+        if not digits:
+            return []
+        ans = []
+        letters = ["0", "", "abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"]
+        def _dfs(d: int, ss: str) -> None:
+            nonlocal digits
+            if d == len(digits):
+                if ss:
+                    ans.append(ss)
+                return
+            pos = ord(digits[d]) - ord('0')
+            if pos == 1:
+                _dfs(d+1, ss)
+            else:
+                for char in letters[pos]:
+                    _dfs(d+1, ss + char)
+
+        _dfs(0, "")
+        return ans
+```
+
+##  lc15. 给定一个整数数组 nums，找出所有满足条件的三元组 [a, b, c]：
+● a + b + c = 0
+● 结果中不能包含重复的三元组
+
+关键思路
+1. 排序预处理
+   ○ 先对数组排序（O(n log n)），为双指针和去重打基础。
+2. 固定一值 + 双指针遍历
+   ○ 遍历数组，固定当前值 nums[i]，再用左右指针 left（i+1）、right（n-1）搜索剩余区间。
+3. 去重策略
+   ○ 外层去重：若 nums[i] == nums[i-1] 则跳过（避免重复三元组）。
+   ○ 内层去重：找到解后，跳过 left 和 right 的相邻重复值。
+4. 剪枝优化
+   ○ 若 nums[i] > 0 提前终止（排序后正数无法组合出0）。
+   ○ 若 nums[i] + nums[left] + nums[right] < 0，则 left++；否则 right--。
+
+```python
+class Solution:
+    def threeSum(self, nums: list[int]) -> list[list[int]]:
+        nums.sort()
+        ans = []
+        n = len(nums)
+        for i in range(0, n):
+            if i > 0 and nums[i] == nums[i-1]:
+                continue
+            l = i + 1
+            r = n - 1
+            while l < r:
+                x = nums[i] + nums[l] + nums[r]
+                if x == 0:
+                    while l < r and nums[l] == nums[l + 1]:
+                        l += 1
+                    while l < r and nums[r] == nums[r - 1]:
+                        r -= 1
+                    res = [nums[i], nums[l], nums[r]]
+                    ans.append(res)
+                    l += 1
+                    r -= 1
+                elif x > 0:
+                    r -= 1
+                else:
+                    l += 1
+
+        return ans
+```
+
+##  lc10.实现支持 . 和 * 的正则表达式匹配：
+● . 匹配任意单个字符
+● * 匹配零个或多个前一个字符
+要求：完全匹配整个字符串 s（而非部分匹配）。
+示例
+● s = "aa", p = "a" → false（无法匹配整个字符串）
+● s = "aa", p = "a*" → true（* 匹配两个 'a'）
+
+```python
+def isMatch(self, s: str, p: str) -> bool:
+   m, n = len(s), len(p)
+
+   # 创建 DP 表格，初始全为 False
+   dp = [[False] * (n + 1) for _ in range(m + 1)]
+   dp[0][0] = True
+
+   # 初始化第一行（s为空字符串的情况）
+   # 只有当 p 是 x*y*z* 这种形式时才能和空字符串匹配
+   for j in range(1, n + 1):
+      if p[j - 1] == '*':
+         dp[0][j] = dp[0][j - 2]
+
+   # 填表
+   for i in range(1, m + 1):
+      for j in range(1, n + 1):
+         if p[j - 1] == '*':
+            # 匹配 0 次
+            dp[i][j] = dp[i][j - 2]
+            # 如果前一个字符匹配，可以考虑匹配 1 次或多次
+            if p[j - 2] == '.' or p[j - 2] == s[i - 1]:
+               dp[i][j] = dp[i][j] or dp[i - 1][j]
+         else:
+            # 普通字符或者 '.'
+            if p[j - 1] == '.' or p[j - 1] == s[i - 1]:
+               dp[i][j] = dp[i - 1][j - 1]
+
+   return dp[m][n]
+```
+
+## lc4.给定两个大小分别为 m 和 n 的正序数组 nums1 和 nums2，找出并返回这两个正序数组的 中位数
+
+归并合并法（简单直观，O(m+n)）
+
+```python
+class Solution:
+    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+        res = []
+        i, j = 0, 0
+        while i < len(nums1) and j < len(nums2):
+            if nums1[i] < nums2[j]:
+                res.append(nums1[i])
+                i += 1
+            else:
+                res.append(nums2[j])
+                j += 1
+        res.extend(nums1[i:])
+        res.extend(nums2[j:])
+
+        n = len(res)
+        if n % 2 == 1:
+            return res[n//2]
+        else:
+            return (res[n//2 -1] + res[n//2]) / 2.0
+```
+
+## lc2. - 输入：两个非空链表（逆序存储非负整数，每个节点存一位数字）
+● 输出：链表（逆序存储两数之和）
+核心思路
+1. 同步遍历：同时遍历 l1 和 l2，节点值相加，记录进位。
+2. 处理长短链表：若一个链表结束，其值视为 0。
+3. 处理最终进位：遍历结束后若进位不为 0，新增节点。
+
+```python
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        master = ListNode(-1)
+        p = master
+        def _add_node(val: int):
+            nonlocal p
+            p.next = ListNode(val=val)
+            p = p.next
+
+        w = 0
+        while l1 and l2:
+            w += l1.val + l2.val
+            _add_node(w%10)
+            w //= 10
+            l1 = l1.next
+            l2 = l2.next
+
+        q = l1 if l1 else l2
+
+        while q:
+            w += q.val
+            _add_node(w%10)
+            w //= 10
+            q = q.next
+
+        while w != 0:
+            _add_node(w%10)
+            w //= 10
+
+        return master.next
+```
+
+## lc3. 无重复字符的最长子串
+关键概念
+1. 问题类型：字符串处理 + 滑动窗口
+2. 核心目标：在字符串中寻找不包含重复字符的最长连续子串的长度
+3. 技术难点：高效处理重复字符的判断与窗口动态调整
+
+```python
+
+import collections
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        deque = collections.deque()
+        char_set = set()
+        ans = 0
+        for char in s:
+            while deque and char in char_set:
+                c = deque.popleft()
+                char_set.remove(c)
+
+            deque.append(char)
+            char_set.add(char)
+            ans = max(ans, len(deque))
+
+        return ans
+```
+
+## lc617. 合并二叉树
+问题描述：给定两个二叉树 t1 和 t2，合并规则：
+
+1. 重叠节点：值相加作为新节点值
+2. 单节点存在时：直接作为新节点
+3. 返回新二叉树的根节点
+   A: 核心思路：递归合并
+4. 终止条件：
+   ○ t1 为空 → 返回 t2
+   ○ t2 为空 → 返回 t1
+5. 递归合并：
+   ○ 创建新节点：val = t1.val + t2.val
+   ○ 新左子树 = 递归合并 t1.left, t2.left
+   ○ 新右子树 = 递归合并 t1.right, t2.right
+
+```python
+class Solution:
+    def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
+        def _merge(root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
+            if not root1:
+                return root2
+            if not root2:
+                return root1
+
+            root1.val = root1.val + root2.val
+            root1.left = _merge(root1.left, root2.left)
+            root1.right = _merge(root1.right, root2.right)
+            return root1
+
+        return _merge(root1, root2)
+```
+
+## lc114.给定二叉树的根节点 root，将其展开为一个单链表（使用右指针连接），展开后的顺序应等于二叉树的前序遍历顺序。
+
+```python
+class Solution:
+    def flatten(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        master = None
+        tail = None
+        def _add_node(node: Optional[TreeNode]) -> None:
+            nonlocal master, tail
+            node.left = None
+            node.right = None
+            if not master:
+                master = node
+                tail = node
+            else:
+                tail.right = node
+                tail = tail.right
+
+        def _dfs(root: Optional[TreeNode]) -> None:
+            if not root:
+                return
+            left = root.left
+            right = root.right
+            _add_node(root)
+            _dfs(left)
+            _dfs(right)
+
+        _dfs(root)
+```
+
+
+## lc79. 给定 m x n 二维字符网格 board 和字符串 word，判断 word 是否存在于网格中。
+
+● 单词必须通过相邻单元格（上下左右）的字母按顺序构成
+● 同一个单元格内的字母不能重复使用
+
+核心思路
+1. DFS + 回溯：
+   ○ 从每个格子出发，尝试匹配单词
+   ○ 通过标记已访问避免重复使用同一单元格
+   ○ 失败时回溯状态（撤销访问标记）
+2. 递归终止条件：
+   ○ 越界 / 已访问 / 字符不匹配 → 失败
+   ○ 匹配到单词末尾 → 成功
+
+```python
+class Solution:
+   def exist(self, board, word):
+      n, m = len(board), len(board[0])
+      dx, dy = [0, 0, 1, -1], [-1, 1, 0, 0]
+      vis = [[0] * m for _ in range(n)]
+      now = 0
+      
+      def dfs(d, x, y):
+         if word[d] != board[x][y]:
+            return False
+         if d == len(word) - 1:
+            return True
+         vis[x][y] = now
+         for i in range(4):
+            nx, ny = x + dx[i], y + dy[i]
+            if 0 <= nx < n and 0 <= ny < m and vis[nx][ny] != now:
+               if dfs(d + 1, nx, ny):
+                  return True
+         vis[x][y] = 0
+         return False
+      
+      for i in range(n):
+         for j in range(m):
+            now += 1
+            if dfs(0, i, j):
+               return True
+      return False
+```
+
+## lc105. 如何用递归法从前序（Preorder）和中序（Inorder）序列构建二叉树？
+
+根节点定位：前序首元素即根节点（e.g. Preorder[0] = 3）
+左右子树划分：
+在中序中找到根位置 idx（e.g. Inorder中 3 的 idx=1）
+左子树节点数 = idx - in_start（e.g. 1-0=1）
+递归构建：
+左子树：前序范围 [pre_start+1, pre_start+左子树节点数]，中序范围 [in_start, idx-1]
+右子树：前序范围 [pre_start+左子树节点数+1, pre_end]，中序范围 [idx+1, in_end]
+终止条件：当前序/中序范围为空时返回 null
+
+```python
+class Solution:
+    def buildTree(self, preorder: List[int], inorder: List[int]) -> Optional[TreeNode]:
+        index_map = {}
+        for i in range(len(inorder)):
+            index_map[inorder[i]] = i
+
+        def _build(preleft: int, preright: int, inleft: int, inright: int) -> Optional[TreeNode]:
+            if preleft > preright:
+                return None
+            preRoot = preorder[preleft]
+            index = index_map[preRoot]
+            size = index - inleft
+            root = TreeNode(preRoot)
+
+            root.left = _build( preleft + 1, preleft + size, inleft, index - 1)
+            root.right = _build(preleft + size + 1, preright, index + 1, inright)
+            return root
+
+        n = len(preorder)
+        return _build(0, n-1, 0, n-1)
+```
