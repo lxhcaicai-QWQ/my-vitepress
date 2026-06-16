@@ -2103,3 +2103,248 @@ class Solution:
         n = len(preorder)
         return _build(0, n-1, 0, n-1)
 ```
+
+## lc5. 给定一个字符串 s，找到 s 中最长的回文子串。假设字符串的最大长度为 1000。
+
+示例：
+输入：s = "babad"
+输出："bab"（或 "aba"）
+
+核心思路：中心扩展法
+1. 基本思想：回文串的对称中心可能是 一个字符（奇数长度） 或 两个字符（偶数长度）。
+2. 遍历策略：对每个字符 s[i]，分别尝试两种扩展方式：
+   ○ 奇数中心：以 s[i] 为中心，向两边扩展。
+   ○ 偶数中心：以 s[i] 和 s[i+1] 为中心（需确保 i+1 不越界）。
+3. 更新最长回文子串：记录每次扩展的长度和起始位置，动态更新最大值。
+   关键公式：起始位置计算
+   若扩展得到的回文串长度为 L，起始位置为：start_index = i - (L - 1) // 2
+   其他方法对比：动态规划（可选）
+   ● 状态定义：dp[i][j] 表示 s[i..j] 是否为回文串。
+   ● 转移方程： dp[i][j]=(s[i]==s[j])∧((j−i<2)∨dp[i+1][j−1])
+
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        n = len(s)
+        dp = [[True] * n for _ in range(n)]
+
+        for length in range(2, n + 1):
+            for i in range(0, n - length + 1):
+                j = i + length - 1
+                dp[i][j] = s[i] == s[j] and dp[i+1][j-1]
+
+        for length in range(n, 0, -1):
+            for i in range(0, n - length + 1):
+                j = i + length - 1
+                if dp[i][j]:
+                    return s[i:j+1]
+
+        return ""
+```
+
+## lc101. 给定一个二叉树的根节点 root，检查它是否轴对称（镜像对称）。
+```txt
+    1
+   / \
+  2   2
+ / \ / \
+3  4 4  3   → 轴对称（返回 True）
+    1
+   / \
+  2   2
+   \   \
+   3    3   → 非轴对称（返回 False）
+```
+核心思路
+1. 镜像规则：
+   ○ 左子树的左节点 = 右子树的右节点
+   ○ 左子树的右节点 = 右子树的左节点
+2. 递归法：DFS 深度优先遍历，分解为子问题比较。
+3. 迭代法：BFS 广度优先遍历，用队列模拟成对节点比较。
+
+```python
+class Solution:
+    def isSymmetric(self, root: Optional[TreeNode]) -> bool:
+        if not root:
+            return True
+
+        def check(left: TreeNode, right: TreeNode) -> bool:
+            if not left and not right:
+                return True
+            if not left or not right:
+                return False
+
+            return (left.val == right.val and
+                    check(left.left, right.right) and
+                    check(left.right, right.left))
+
+        return check(root.left, root.right)
+```
+
+## lc84.  问题描述
+输入：非负整数数组 heights，表示柱状图的高度（每个柱子宽度为 1）
+输出：返回可勾勒出的最大矩形的面积
+示例：heights = [2,1,5,6,2,3] → 输出 10（图中矩形区域）
+
+算法步骤
+1. 添加哨兵：在数组头尾添加高度 0（[0] + heights + [0]），避免处理空栈或边界问题。
+2. 初始化：
+   ○ 栈 stack = [0]（存入哨兵索引 0）
+   ○ max_area = 0
+3. 遍历每个索引 i（从 1 到 len(heights)-1）：
+   ○ 循环弹出：若当前 heights[i] < 栈顶高度 → 说明栈顶的右边界已找到：
+   ■ 弹出栈顶索引 top = stack.pop()
+   ■ 左边界 left = 新栈顶索引（栈空时为起始哨兵）
+   ■ 计算宽度 w = i - left - 1
+   ■ 更新面积 max_area = max(max_area, heights[top] * w)
+   ○ 压入当前索引：stack.append(i)
+4. 返回 max_area
+
+```python
+class Solution:
+    def largestRectangleArea(self, heights: List[int]) -> int:
+        heights = heights + [0]
+        n = len(heights)
+        stack = []
+        widstack = []
+        ans = 0
+        for i in range(n):
+            width = 0
+            while stack and heights[i] < heights[stack[-1]]:
+                idx = stack.pop()
+                width +=  widstack.pop()
+                ans = max(ans, width * heights[idx])
+
+            widstack.append(width + 1)
+            stack.append(i)
+
+        return ans
+```
+
+## lc85. 最大矩形（Maximal Rectangle）
+
+问题描述
+给定一个仅包含 0 和 1 的二维矩阵，找出仅包含 1 的最大矩形，并返回其面积。
+
+核心思路：转化为柱状图问题
+1. 问题转化：
+   对矩阵逐行处理，计算每个位置的高度 height[j]（当前列向上连续的 1 的数量）。
+   示例矩阵逐行转化：
+   第0行: [1, 0, 1, 0, 0] -> heights = [1,0,1,0,0]
+   第1行: [1,0,1,1,1] -> heights = [2,0,2,1,1]  // 上一行基础上累加
+   第2行: [1,1,1,1,1] -> heights = [3,1,3,2,2]
+   第3行: [1,0,0,1,0] -> heights = [4,0,0,3,0]
+2. 对每行调用“柱状图最大矩形”（LeetCode 84）：
+   ○ 用 单调递增栈 快速计算当前 heights[] 中的最大矩形面积。
+
+```python
+class Solution:
+
+    def solve(self, heights: List[int]) -> int:
+        n = len(heights)
+        stack = []
+        widstack = []
+        ans = 0
+        for i in range(n):
+            width = 0
+            while stack and heights[i] < heights[stack[-1]]:
+                idx = stack.pop()
+                width +=  widstack.pop()
+                ans = max(ans, width * heights[idx])
+
+            widstack.append(width + 1)
+            stack.append(i)
+
+        return ans
+
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        n = len(matrix)
+        m = len(matrix[0])
+
+        f = [[0] * (m + 1) for _ in range(n + 1)]
+        for i in range(0, n):
+            for j in range(0, m):
+                if i == 0:
+                    f[i][j] = ord(matrix[i][j]) - ord('0')
+                else:
+                    if matrix[i][j] == '1':
+                        f[i][j] = f[i - 1][j] + 1
+                    else:
+                        f[i][j] = 0
+
+        ans = 0
+        for i in range(n):
+            ans = max(ans, self.solve(f[i]))
+
+        return ans
+```
+
+
+## LeetCode 78. 子集
+给定整数数组 nums（元素互不相同），返回所有可能的子集（幂集）。
+解集 不能 包含重复的子集
+
+示例：
+输入：nums = [1,2,3]
+输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
+
+
+解法详解
+核心概念
+▸ 子集数量：2^n（每个元素选/不选）
+▸ 关键操作：决策树遍历 + 回溯
+回溯法三步曲
+1. 路径记录：当前已选元素列表 path
+2. 选择列表：从 start 开始的未选元素
+3. 递归定义：
+   ○ 立即保存当前路径（重要！）
+   ○ 遍历选择列表 → 做选择 → 递归 → 撤销选择
+   二进制解法详解（LeetCode 78.子集）
+   核心思想
+   每个元素的状态可用二进制位表示：
+   ● 0 → 不选
+   ● 1 → 选
+   ● n 个元素 → 2^n 种组合（0 到 2^n - 1）
+
+```python
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        n = len(nums)
+        ans = []
+        for i in range(0, (1<<n)):
+            res = []
+            for j in range(0, n):
+                if i >> j & 1 == 1:
+                    res.append(nums[j])
+
+            ans.append(res)
+
+        return ans
+```
+
+## lc96. 给定一个整数 n，求以 1 ... n 为节点组成的二叉搜索树 (BST) 有多少种不同的结构？返回可能的 BST 数量。
+
+
+1. 动态规划解法（最优）
+   ● 状态定义：dp[i] 表示由 i 个节点组成的 BST 数量。
+   ● 边界条件：
+   ○ dp[0] = 1（空树算一种）
+   ○ dp[1] = 1（单个节点只有一种结构）
+   ● 递推关系：
+   ○ 对于节点数 i，遍历根节点位置 j（1 ≤ j ≤ i）：
+   ■ 左子树有 j-1 个节点 → 数量 dp[j-1]
+   ■ 右子树有 i-j 个节点 → 数量 dp[i-j]
+   ○ 公式：dp[i] = sum_{j=1}^{i} (dp[j-1] * dp[i-j])
+
+
+```python
+class Solution:
+    def numTrees(self, n: int) -> int:
+        g = [0] * (n + 1)
+        g[0] = g[1] = 1
+        for i in range(2, n + 1):
+            for j in range(1, i + 1):
+                g[i] += g[j - 1] * g[i - j]
+
+        return g[n]
+```
