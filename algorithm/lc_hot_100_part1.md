@@ -2348,3 +2348,148 @@ class Solution:
 
         return g[n]
 ```
+
+## lc98. 给你一个二叉树的根节点 root ，判断其是否是一个有效的二叉搜索树。
+有效 二叉搜索树定义如下：
+● 节点的左子树只包含 小于 当前节点的数。
+● 节点的右子树只包含 大于 当前节点的数。
+● 所有左子树和右子树自身必须也是二叉搜索树。
+
+
+● 中序遍历性质：
+二叉搜索树的中序遍历结果必须严格递增（左 < 根 < 右），利用此性质验证。
+递归验证法：
+定义递归函数 dfs(node, min, max)，其中：
+● min/max：当前节点值的理论下界/上界
+
+```python
+class Solution:
+    def isValidBST(self, root: Optional[TreeNode]) -> bool:
+        res = []
+        def dfs(root: Optional[TreeNode]):
+            if not root:
+                return
+            dfs(root.left)
+            res.append(root.val)
+            dfs(root.right)
+
+        dfs(root)
+        for i in range(1, len(res)):
+            if res[i] <= res[i-1]:
+                return False
+
+        return True
+```
+
+
+## lc102. 给定一个二叉树的根节点 root，返回其节点值的层序遍历结果（即逐层从左到右访问）
+
+
+广度优先搜索（BFS）+ 队列
+关键步骤：
+1. 队列初始化：将根节点加入队列（若根节点非空）。
+2. 逐层处理：
+   ○ 每次循环记录当前队列长度 n（即当前层的节点数）。
+   ○ 循环 n 次，弹出节点，将其值加入临时列表。
+   ○ 若节点有左/右子节点，将其加入队列。
+3. 保存结果：每层遍历结束后，将临时列表加入最终结果
+   解法二:
+   通过列表记
+
+```python
+class Solution:
+    def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        res = [[] for _ in range(2000)]
+
+        def dfs(dep: int, root: Optional[TreeNode]) -> int:
+            if not root:
+                return 0
+            res[dep].append(root.val)
+            return max(
+                dfs(dep + 1, root.left),
+                dfs(dep + 1, root.right)
+            ) + 1
+
+        n = dfs(0, root)
+        ans = []
+        for i in range(0, n):
+            ans.append(res[i])
+
+        return ans
+```
+
+
+## lc70. 假设你正在爬楼梯，需要爬 n 阶才能到达楼顶。每次你可以爬 1阶 或 2阶。问：有多少种不同的方法可以爬到楼顶？（n 为正整数）
+
+1. 状态定义：
+   dp[i] = 爬到第 i 阶楼梯的方法总数。
+2. 递推关系：
+   每一步可爬 1阶 或 2阶，故：
+   dp[i] = dp[i-1] + dp[i-2]
+   ○ 到达 i 的路径 =（从 i-1 爬 1 阶） + （从 i-2 爬 2 阶）
+3. 初始状态：
+   ○ dp[0] = 1（起点，0 阶有 1 种方法：不动）
+   ○ dp[1] = 1（爬 1 阶）
+
+```python
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        f = [0] * (n + 1)
+        f[0] = 1
+        f[1] = 1
+
+        for i in range(2, n + 1):
+            f[i] += f[i-1] + f[i -2]
+
+        return f[n]
+```
+
+## lc55. 跳跃游戏
+给定一个非负整数数组 nums，你最初位于数组的第一个下标。数组中的每个元素代表你在该位置可以跳跃的最大长度。判断你是否能够到达最后一个下标。
+
+示例 1
+输入：nums = [2,3,1,1,4]
+输出：true
+解释：从位置 0 跳 1 步到位置 1，再从位置 1 跳 3 步到达末尾。
+示例 2
+输入：nums = [3,2,1,0,4]
+输出：false
+解释：无论如何跳转，最终会卡在位置 3（跳跃长度为 0）。
+
+核心思路：贪心算法
+维护一个变量 max_reach，表示当前能到达的最远位置。遍历数组时：
+1. 若当前位置 i > max_reach，说明无法继续前进，返回 false。
+2. 否则更新 max_reach = max(max_reach, i + nums[i])。
+3. 若 max_reach >= 数组末位索引，提前返回 true。
+
+```python
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        maxr = 0
+        n = len(nums)
+        for i in range(0, n):
+            if maxr >= i:
+                maxr = max(maxr, i + nums[i])
+
+            if maxr >= n - 1:
+                return True
+
+        return False
+```
+
+## lc62. 不同路径
+机器人位于 m x n 网格的左上角（起点）。机器人每次只能向右或向下移动一步。目标是到达网格的右下角（终点）。问总共有多少条不同的路径？
+
+```python
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        f = [[0] * (n + 1) for _ in range(m + 1)]
+        f[1][1] = 1
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                if i == 1 and j == 1:
+                    continue
+                f[i][j] += f[i-1][j] + f[i][j-1]
+
+        return f[m][n]
+```
