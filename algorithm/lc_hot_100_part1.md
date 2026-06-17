@@ -2493,3 +2493,192 @@ class Solution:
 
         return f[m][n]
 ```
+
+## lc56. 合并区间 给出一个区间的集合，请合并所有重叠的区间。
+
+
+示例
+输入：intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出：[[1,6],[8,10],[15,18]]
+解释：区间 [1,3] 和 [2,6] 重叠，合并为 [1,6]
+
+解题思路
+1. 排序：按区间起点升序排序（保证相邻区间可比较）。
+2. 合并：遍历区间，比较当前区间起点与上一个区间的终点：
+   ○ 若无重叠，则直接添加到结果。
+   ○ 若有重叠，则更新上一个区间的终点（取两区间的最大值）
+
+```python
+class Solution:
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals.sort(key=lambda x:(x[0],-x[1]))
+        ans = []
+        l_pos,r_pos = intervals[0]
+        for (l, r) in intervals:
+            if r_pos >= l:
+                r_pos = max(r_pos, r)
+            else:
+                ans.append([l_pos, r_pos])
+                l_pos = l
+                r_pos = r
+        ans.append([l_pos, r_pos])
+        return ans
+```
+
+## lc581. 最短无序连续子数组
+问题描述
+给定一个整数数组，需要找到一个连续子数组，若对这个子数组进行升序排序，整个数组会变成升序。返回满足条件的最短连续子数组的长度。
+
+算法步骤：
+1. 复制并排序：
+2. 确定左边界：
+   ● 从左向右比较原数组和排序后数组
+   ● 找到第一个不相同的位置
+3. 确定右边界：
+   ● 从右向左比较原数组和排序后数组
+   ● 找到第一个不相同的位置
+
+```python
+class Solution:
+    def findUnsortedSubarray(self, nums: List[int]) -> int:
+        res = [x for x in nums]
+        res.sort()
+
+        if res == nums:
+            return 0
+
+        n = len(nums)
+        l = 0
+        for i in range(0, n):
+            if res[i] != nums[i]:
+                l = i
+                break
+
+        r = n - 1
+        for i in range(n - 1, -1, -1):
+            if res[i] != nums[i]:
+                r = i
+                break
+
+        return r - l + 1
+```
+
+##  lc53. 最大子数组和
+给定一个整数数组 nums，找到一个具有最大和的连续子数组（至少包含一个元素），返回其最大和。
+
+1. 动态规划思想：用 dp[i] 表示以 nums[i] 结尾的子数组的最大和。
+2. 状态转移：
+   ○ 若 dp[i-1] > 0 → 将 nums[i] 加入当前子数组：dp[i] = dp[i-1] + nums[i]
+   ○ 若 dp[i-1] ≤ 0 → 舍弃前面部分，重新开始：dp[i] = nums[i]
+3. 简化变量：只需保存 dp[i] 的前一个值，用变量 curr_sum 替代整个 dp 数组。
+4. 全局最大值：用 max_sum 实时更新最大和。
+
+```python
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        n = len(nums)
+        dp = [0] * (n + 1)
+        ans = nums[0]
+        for i in range(1, n + 1):
+            dp[i] = max(dp[i-1] + nums[i-1], nums[i-1])
+            ans = max(ans, dp[i])
+
+        return ans
+```
+
+## lc 72. 编辑距离
+给定两个字符串 word1 和 word2，返回将 word1 转换为 word2 所需的最小操作数。操作包括：
+● 插入（在 word1 中插入一个字符）
+● 删除（删除 word1 的一个字符）
+● 替换（替换 word1 的一个字符）
+
+ 核心思路：动态规划
+定义 dp[i][j]：表示将 word1 的前 i 个字符转换为 word2 的前 j 个字符的最小操作数。
+
+
+状态转移方程 dp[i][j]=min(dp[i][j−1],dp[i−1][j],dp[i−1][j−1])+1
+1. 当 word1[i-1] == word2[j-1]
+   ○ 无需操作：dp[i][j] = dp[i-1][j-1]
+2. 当 word1[i-1] != word2[j-1]
+   ○ 选择以下操作中最小的一个：
+   ■ 插入：dp[i][j-1] + 1 （在 word1 中插入 word2[j-1]）
+   ■ 删除：dp[i-1][j] + 1 （删除 word1[i-1]）
+   ■ 替换：dp[i-1][j-1] + 1（将 word1[i-1] 替换为 word2[j-1]）
+
+```python
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n = len(word1)
+        m = len(word2)
+
+        if n * m == 0:
+            return n + m
+        f = [[0] * (m + 1) for _ in range(n + 1)]
+
+        for i in range(m + 1):
+            f[0][i] = i
+
+        for i in range(n + 1):
+            f[i][0] = i
+
+        for i in range(1, n + 1):
+            for j in range(1, m + 1):
+                if word1[i - 1] == word2[j - 1]:
+                    f[i][j] = f[i-1][j-1]
+                else:
+                    f[i][j]  = min(f[i][j-1], f[i-1][j], f[i-1][j-1]) + 1
+
+        return f[n][m]
+```
+
+
+## lc64. 最小路径和
+在一个 m×n 的网格中，从左上角出发，每次只能向右或向下移动，到达右下角。求路径上数字总和的最小值。
+
+1. 动态规划 (DP)：
+   ○ 定义 dp[i][j]：从左上角 (0,0) 到 (i,j) 的最小路径和。
+   ○ 初始化：
+   ■ dp[0][0] = grid[0][0]
+   ■ 第一行：只能向右走 → dp[0][j] = dp[0][j-1] + grid[0][j]
+   ■ 第一列：只能向下走 → dp[i][0] = dp[i-1][0] + grid[i][0]
+   ○ 状态转移：
+   dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]
+
+
+```python
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        n,m = len(grid), len(grid[0])
+        f = [[10**10] * (m + 1) for _ in range(n + 1)]
+
+        for i in range(1, n + 1):
+            for j in range(1, m + 1):
+                if i == 1 and j == 1:
+                    f[i][j] = grid[i-1][j-1]
+                else:
+                    f[i][j] = min(f[i-1][j], f[i][j-1]) + grid[i-1][j-1]
+
+        return f[n][m]
+```
+
+## lc75. 颜色分类（Sort Colors）
+给定一个包含红色（0）、白色（1）和蓝色（2）的数组 nums，原地对它们进行排序，使相同颜色的元素相邻，且按红、白、蓝顺序排列。
+
+分类计数然后重新排列就行
+
+```python
+class Solution:
+    def sortColors(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        cnt = [0] * 3
+        for x in nums:
+            cnt[x] += 1
+
+        pos = 0
+        for i in range(0, 3):
+            for j in range(0, cnt[i]):
+                nums[pos] = i
+                pos += 1
+```
