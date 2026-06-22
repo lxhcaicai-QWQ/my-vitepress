@@ -2682,3 +2682,41 @@ class Solution:
                 nums[pos] = i
                 pos += 1
 ```
+
+## c146. 设计实现LRU（最近最少使用）缓存：
+1. LRUCache(int capacity) 初始化容量
+2. int get(int key) 若存在返回值，否则返回-1
+3. void put(int key, int value) 若容量满则淘汰最久未使用的键
+
+
+核心原理：利用 Python 字典的“有序性”
+从 Python 3.7 开始，普通的 dict 会严格按照键值对的“插入顺序”来进行迭代。
+
+我们可以利用这个特性，完全不写任何指针和链表，仅靠字典的 pop 操作来实现 LRU：
+
+使用顺序代表新旧：越早插入的键，在字典里越靠前；越新插入的键，越靠后。
+get 操作（标记为最新）：如果 key 存在，先把它从字典里删除（pop），然后再重新存入。这样它就会被挪到字典的最末尾，代表“最近使用过”。
+put 操作（淘汰最旧）：如果超出容量，使用 next(iter(dict)) 获取字典的第一个键（即最久没使用的），然后把它删掉
+```python
+class LRUCache:
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache = {}
+
+    def get(self, key: int) -> int:
+        if key not in self.cache:
+            return -1
+        val = self.cache.pop(key)
+        self.cache[key] = val
+        return val
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            self.cache.pop(key)
+        elif len(self.cache) >= self.capacity:
+            oldest_key = next(iter(self.cache))
+            self.cache.pop(oldest_key)
+
+        self.cache[key] = value
+```
